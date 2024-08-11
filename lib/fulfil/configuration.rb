@@ -62,9 +62,7 @@ module Fulfil
   #
   # @return [Fulfil::Configuration] The current configuration object.
   def self.configuration
-    @configuration_mutex.synchronize do
-      @configuration
-    end
+    @configuration_mutex.synchronize { @configuration }
   end
 
   # Allows the configuration of the gem in a thread-safe manner.
@@ -72,9 +70,7 @@ module Fulfil
   # @yieldparam [Fulfil::Configuration] config The current configuration object.
   # @return [void]
   def self.configure
-    @configuration_mutex.synchronize do
-      yield(@configuration)
-    end
+    @configuration_mutex.synchronize { yield(@configuration) }
   end
 
   # Overwrites the configuration with the newly provided configuration options.
