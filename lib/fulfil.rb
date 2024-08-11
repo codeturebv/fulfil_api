@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "fulfil/version"
-require_relative "fulfil/configuration"
+require "zeitwerk"
+
+loader = Zeitwerk::Loader.for_gem
+loader.setup
 
 module Fulfil
   class Error < StandardError; end
