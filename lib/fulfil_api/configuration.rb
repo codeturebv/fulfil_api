@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Fulfil
+module FulfilApi
   # Configuration model for the Fulfil gem.
   #
   # This model holds configuration settings and provides thread-safe access

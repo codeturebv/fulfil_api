@@ -1,22 +1,22 @@
 # frozen_string_literal: true
 
-require_relative "lib/fulfil/version"
+require_relative "lib/fulfil_api/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "fulfil"
-  spec.version = Fulfil::VERSION
+  spec.name = "fulfil_api"
+  spec.version = FulfilApi::VERSION
   spec.authors = ["Stefan Vermaas"]
   spec.email = ["stefan@codeture.nl"]
 
   spec.summary = "A HTTP client to interact the Fulfil.io API"
   spec.description = "A Ruby HTTP client to interact with the API endpoints of Fulfil.io"
-  spec.homepage = "https://www.github.com/codeturebv/fulfil"
+  spec.homepage = "https://www.github.com/codeturebv/fulfil_api"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://www.github.com/codeturebv/fulfil"
-  spec.metadata["changelog_uri"] = "https://www.github.com/codeturebv/fulfil/blob/main/CHANGELOG.md"
+  spec.metadata["source_code_uri"] = "https://www.github.com/codeturebv/fulfil_api"
+  spec.metadata["changelog_uri"] = "https://www.github.com/codeturebv/fulfil_api/blob/main/CHANGELOG.md"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.

@@ -2,5 +2,5 @@
 
 require "test_helper"
 
-class FulfilTest < Minitest::Test
+class FulfilApiTest < Minitest::Test
 end
