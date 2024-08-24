@@ -5,7 +5,7 @@ require "zeitwerk"
 loader = Zeitwerk::Loader.for_gem
 loader.setup
 
-module Fulfil
+module FulfilApi
   class Error < StandardError; end
   # Your code goes here...
 end
