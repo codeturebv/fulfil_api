@@ -14,29 +14,29 @@ module FulfilApi
     end
 
     def test_default_configuration_values
-      assert_equal "2.0", @config.api_version
+      assert_equal "v2", @config.api_version
       assert_nil @config.merchant_id
     end
 
     def test_initialize_with_custom_options
-      config = FulfilApi::Configuration.new(api_version: "1.0", merchant_id: "codeture")
+      config = FulfilApi::Configuration.new(api_version: "v1", merchant_id: "codeture")
 
-      assert_equal "1.0", config.api_version
+      assert_equal "v1", config.api_version
       assert_equal "codeture", config.merchant_id
     end
 
     def test_configuration_update
-      @config.api_version = "1.0"
+      @config.api_version = "v1"
       @config.merchant_id = "codeture"
 
-      assert_equal "1.0", @config.api_version
+      assert_equal "v1", @config.api_version
       assert_equal "codeture", @config.merchant_id
     end
 
     def test_accessing_configuration_options
       config = FulfilApi::Configuration.new(api_version: nil, merchant_id: "codeture")
 
-      assert_equal "2.0", config.api_version
+      assert_equal "v2", config.api_version
       assert_equal "codeture", config.merchant_id
 
       assert_raises NoMethodError do
@@ -55,20 +55,20 @@ module FulfilApi
     end
 
     def test_configuration_assignment
-      FulfilApi.configuration = { api_version: "1.0", merchant_id: "codeture" }
+      FulfilApi.configuration = { api_version: "v1", merchant_id: "codeture" }
 
-      assert_equal "1.0", FulfilApi.configuration.api_version
+      assert_equal "v1", FulfilApi.configuration.api_version
       assert_equal "codeture", FulfilApi.configuration.merchant_id
     end
 
     def test_with_config_temporary_configuration
-      FulfilApi.with_config(api_version: "1.0", merchant_id: "temporary") do
-        assert_equal "1.0", FulfilApi.configuration.api_version
+      FulfilApi.with_config(api_version: "v1", merchant_id: "temporary") do
+        assert_equal "v1", FulfilApi.configuration.api_version
         assert_equal "temporary", FulfilApi.configuration.merchant_id
       end
 
       # Ensure the original configuration is restored after the block
-      assert_equal "2.0", FulfilApi.configuration.api_version
+      assert_equal "v2", FulfilApi.configuration.api_version
     end
   end
 end

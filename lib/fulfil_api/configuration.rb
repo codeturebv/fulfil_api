@@ -46,12 +46,13 @@ module FulfilApi
     private
 
     # Sets the default options for the gem configuration.
+    #
     # This method is called during initialization to ensure all configuration
-    # options have sensible defaults if not explicitly set.
+    #   options have sensible defaults if not explicitly set.
     #
     # @return [void]
     def set_default_options
-      self.api_version = "2.0" if api_version.nil?
+      self.api_version = "v2" if api_version.nil?
     end
   end
 
@@ -90,7 +91,7 @@ module FulfilApi
   end
 
   # Temporarily applies the provided configuration options within a block,
-  # and then reverts to the original configuration after the block executes.
+  #   and then reverts to the original configuration after the block executes.
   #
   # @param temporary_options [Hash] A hash of temporary configuration options.
   # @yield Executes the block with the temporary configuration.
