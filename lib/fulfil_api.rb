@@ -6,6 +6,6 @@ loader = Zeitwerk::Loader.for_gem
 loader.setup
 
 module FulfilApi
-  class Error < StandardError; end
-  # Your code goes here...
 end
+
+loader.eager_load
