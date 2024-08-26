@@ -14,3 +14,5 @@ gem "rubocop", "~> 1.21" # RuboCop is a Ruby code style checking and code format
 gem "rubocop-minitest", "~> 0.35" # Automatic Minitest code style checking. [https://github.com/rubocop/rubocop-minitest]
 gem "rubocop-performance", "~> 1.21" # Automatic checking of performance optimizations in Ruby. [https://github.com/rubocop/rubocop-performance/]
 gem "rubocop-rake", "~> 0.6" # Automatic Rake code style checking. [https://github.com/rubocop/rubocop-rake]
+
+gem "webmock", "~> 3.23" # WebMock allows stubbing HTTP requests and setting expectations on HTTP requests. [https://github.com/bblimke/webmock]
