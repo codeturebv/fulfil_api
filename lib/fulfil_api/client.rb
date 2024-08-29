@@ -59,7 +59,7 @@ module FulfilApi
     # @return [Faraday::Connection]
     def connection
       # TODO: Allow passing configuration options for the request
-      @connection ||= Faraday.new(url: api_endpoint) do |connection|
+      @connection ||= Faraday.new(headers: request_headers, url: api_endpoint) do |connection|
         connection.adapter :net_http_persistent # TODO: Allow passing configuration options
 
         # Configuration of the request middleware
@@ -98,6 +98,14 @@ module FulfilApi
       connection.send(method.to_sym, expand_relative_path(relative_path), *args, **kwargs).body
     rescue Faraday::Error => e
       handle_request_error(e)
+    end
+
+    # @return [Hash] The HTTP headers for any HTTP request to Fulfil.
+    def request_headers
+      default_headers = { "Content-Type" => "application/json" }
+      return default_headers if configuration.access_token.nil?
+
+      default_headers.merge(**configuration.access_token.to_http_header)
     end
   end
 

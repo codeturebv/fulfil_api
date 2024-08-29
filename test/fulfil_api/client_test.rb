@@ -7,9 +7,7 @@ module FulfilApi
     def setup
       @merchant_id = "merchant-#{SecureRandom.uuid}"
 
-      @client = FulfilApi::Client.new(
-        FulfilApi::Configuration.new(merchant_id: @merchant_id, api_version: @version)
-      )
+      @client = FulfilApi::Client.new(FulfilApi::Configuration.new(merchant_id: @merchant_id))
     end
 
     def test_relative_path_expansion
@@ -60,6 +58,50 @@ module FulfilApi
 
       assert_equal 422, error.details[:response_status]
       assert_equal({ error: "something went wrong" }.to_json, error.details[:response_body])
+    end
+
+    def test_inclusion_of_oauth_access_token
+      oauth_access_token = FulfilApi::AccessToken.new(SecureRandom.uuid, type: :oauth)
+
+      client = FulfilApi::Client.new(
+        FulfilApi::Configuration.new(merchant_id: @merchant_id, access_token: oauth_access_token)
+      )
+
+      stub_fulfil_request(:get)
+      client.get("sale.sale/123")
+
+      assert_requested :get, %r{sale\.sale/123}i do |request|
+        assert_equal "Bearer #{oauth_access_token.value}", request.headers["Authorization"]
+      end
+    end
+
+    def test_inclusion_of_personal_access_token
+      personal_access_token = FulfilApi::AccessToken.new(SecureRandom.uuid)
+
+      client = FulfilApi::Client.new(
+        FulfilApi::Configuration.new(merchant_id: @merchant_id, access_token: personal_access_token)
+      )
+
+      stub_fulfil_request(:get)
+      client.get("sale.sale/123")
+
+      assert_requested :get, %r{sale\.sale/123}i do |request|
+        assert_equal personal_access_token.value, request.headers["X-Api-Key"]
+      end
+    end
+
+    def test_exclusion_of_any_access_token_when_not_configured
+      client = FulfilApi::Client.new(
+        FulfilApi::Configuration.new(merchant_id: @merchant_id, access_token: nil)
+      )
+
+      stub_fulfil_request(:get)
+      client.get("sale.sale/123")
+
+      assert_requested :get, %r{sale\.sale/123}i do |request|
+        refute_includes request.headers.keys, "X-API-KEY"
+        refute_includes request.headers.keys, "Authorization"
+      end
     end
 
     def test_put_request_without_body
