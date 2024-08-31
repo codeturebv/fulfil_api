@@ -37,6 +37,14 @@ module FulfilApi
       # Builds the attribute value and clears the path to the attribute when the
       #   attribute name doesn't exist yet on the {FulfilApi::Resource}.
       #
+      # @example attribute with a single attribute name
+      #   $ build_attribute("warehouse", "Main Warehouse")
+      #   => { "warehouse" => "Main Warehouse" }
+      #
+      # @example attribute with multiple/nested attribute names
+      #   $ build_attribute("warehouse.id", 10)
+      #   => { "warehouse" => { "id" => 10 } }
+      #
       # @param attribute_names [String, Symbol] The expanded list of attribute names
       # @param value [Any] The attribute value
       # @return [Hash] The newly build attribute
