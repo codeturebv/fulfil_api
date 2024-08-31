@@ -2,8 +2,15 @@
 
 module FulfilApi
   class Resource
-    # The {FulfilApi::Resource::AttributeType} enables parsing any special and non-special
-    #   attribute value returned by the Fulfil API.
+    # The {FulfilApi::Resource::AttributeType} enables parsing any attribute value
+    #   returned by the Fulfil API. To preserve type information Fulfil extends the JSON format.
+    #   When the response value is extended, it is considered castable.
+    #
+    # @example an extended attribute value (date)
+    #   $ AttributeType.cast({ "__class__" => "date", "iso_string" => "2024-12-12" })
+    #   => #<Date: 2024-08-30 />
+    #
+    # For all possible special
     class AttributeType
       # Casts any attribute value to its final form.
       #
@@ -15,7 +22,7 @@ module FulfilApi
 
       # @param value [Any]
       def initialize(value)
-        @type = value.is_a?(Hash) ? value.fetch("__class__", nil) : nil
+        @type = extended?(value) ? value.fetch("__class__") : nil
         @value = value
       end
 
@@ -46,6 +53,17 @@ module FulfilApi
         else
           @value
         end
+      end
+
+      private
+
+      # The {#extended?} checks if the provided value is considered an extended
+      #   attribute value.
+      #
+      # @param value [Any] The attribute value returned by Fulfil's API endpoint.
+      # @return [true, false]
+      def extended?(value)
+        value.is_a?(Hash) && value.key?("__class__")
       end
     end
   end
