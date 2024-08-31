@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module FulfilApi
+  # The {FulfilApi::Resource} represents a single resource returned by the API
+  #   endpoints of Fulfil.
   class Resource
     include AttributeAssignable
 
