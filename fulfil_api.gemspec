@@ -32,7 +32,8 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # Uncomment to register a new dependency of your gem
+  spec.add_dependency "faraday", "~> 2.10" # A HTTP/REST API client library. [https://github.com/lostisland/faraday]
+  spec.add_dependency "faraday-net_http_persistent", "~> 2.0" # Faraday Adapter for NetHttpPersistent. [https://github.com/lostisland/faraday-net_http_persistent]
   spec.add_dependency "zeitwerk", "~> 2.6" # Zeitwerk implements constant autoloading with Ruby semantics. [https://github.com/fxn/zeitwerk]
 
   # For more information and examples about making a new gem, check out our
