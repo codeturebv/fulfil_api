@@ -3,6 +3,13 @@
 module FulfilApi
   class Resource
     class Relation
+      # The {FulfilApi::Resource::Relation::Loadable} extends the relation by
+      #   adding methods to load, reload and identify loaded resources from Fulfil's
+      #   API endpoints.
+      #
+      # By default, all HTTP requests to Fulfil are delayed until they're directly
+      #   or indirectly requested by the user of the gem. This way, we ensure that
+      #   we only request data when we need to.
       module Loadable
         # Loads resources from Fulfil's API based on the current filters, fields, and limits
         #   if they haven't been loaded yet.
