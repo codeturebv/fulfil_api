@@ -1,34 +1,80 @@
-# Fulfil
+# The `fulfil_api` Ruby gem
 
-TODO: Delete this and the text below, and describe your gem
-
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/fulfil`. To experiment with that code, run `bin/console` for an interactive prompt.
+The `fulfil_api` is a simple, powerful HTTP client written in Ruby to interact with Fulfil's API. It takes learnings from many years of working with Fulfil's APIs and turns it into an easy to use HTTP client.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
-
 Install the gem and add to the application's Gemfile by executing:
 
-    $ bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+```shell
+  $ bundle add fulfil_api
+```
 
 If bundler is not being used to manage dependencies, install the gem by executing:
 
-    $ gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+```shell
+  $ gem install fulfil_api
+```
 
 ## Usage
 
-TODO: Write usage instructions here
+### Configuration
+
+There are two ways of configuring the HTTP client:
+
+1. Staticly through an initializer file (typically used in a Rails application)
+2. Dynamically through calling the `FulfilApi.with_config` method.
+
+The configuration of the FulfilApi client is thread-safe and therefore you can even combine both the static and dynamic configuration of Fulfil in case you need to.
+
+#### Using a Static Configuration
+
+```ruby
+# config/initializers/fulfil_api.rb
+
+FulfilApi.configure do |config|
+  config.access_token = FulfilApi::AccessToken.new(ENV["FULFIL_API_KEY"])
+  config.merchant_id = "the-id-of-the-merchant"
+end
+```
+
+
+#### Using a Dynamic Configuration
+
+```ruby
+FulfilApi.with_config(
+  access_token: FulfilApi::AccessToken.new(ENV["FULFIL_API_KEY"]),
+  merchant_id: "the-id-of-the-merchant"
+) do
+  # Query the Fulfil API
+end
+```
+
+#### Available Configuration Options
+
+The following configuration options are (currently) available throught both configuration methods:
+
+- `access_token` (`FulfilApi::AccessToken`): The `access_token` is required to authenticate with Fulfil's API endpoints. Fulfil supports two types of access tokens: "OAuth" and "Personal" access tokens. The gem supports both tokens and defaults to the personal access token.
+
+> **NOTE:** To use an OAuth access token, use `FulfilApi::AccessToken.new(oauth_token, type: :oauth)`. Typically, you would use the OAuth access token only when using the [dynamic configuration](#using-a-dynamic-configuration) mode of the gem.
+
+- `merchant_id` (`String`): The `merchant_id` is the subdomain that the Fulfil instance is hosted on. This configuration option is required to be able to query Fulfil's API endpoints.
+
+### TODO: Querying the Fulfil API
 
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+To install this gem onto your local machine, run `bin/rake install`.
+
+## Releasing
+
+To release a new version, run the `bin/release` script. This will update the version number in `version.rb`, create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/fulfil. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/fulfil/blob/main/CODE_OF_CONDUCT.md).
+Bug reports and pull requests are welcome on GitHub at https://github.com/codeturebv/fulfil_api. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/codeturebv/fulfil_api/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
@@ -36,4 +82,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the Fulfil project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/fulfil/blob/main/CODE_OF_CONDUCT.md).
+Everyone interacting in the Fulfil project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/codeturebv/fulfil_api/blob/main/CODE_OF_CONDUCT.md).
