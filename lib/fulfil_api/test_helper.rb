@@ -60,9 +60,9 @@ module FulfilApi
     def stubbed_request_for(method, **options)
       case options.transform_keys(&:to_sym)
       in { model:, id: }
-        stub_request(method.to_sym, %r{fulfil.io/api/v\d+/#{model}/#{id}(.*)}i)
+        stub_request(method.to_sym, %r{fulfil.io/api/v\d+/(?:model/)?#{model}/#{id}(.*)}i)
       in { model: }
-        stub_request(method.to_sym, %r{fulfil.io/api/v\d+/#{model}}i)
+        stub_request(method.to_sym, %r{fulfil.io/api/v\d+/(?:model/)?#{model}(.*)}i)
       else
         stub_request(method.to_sym, %r{fulfil.io/api/v\d+}i)
       end
