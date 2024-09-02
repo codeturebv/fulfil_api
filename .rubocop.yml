@@ -18,6 +18,13 @@ Metrics/ClassLength:
   Exclude:
     - test/**/*_test.rb
 
+Metrics/MethodLength:
+  Exclude:
+    - test/**/*_test.rb
+
+Minitest/MultipleAssertions:
+  Max: 5
+
 Style/Documentation:
   Enabled: false
 
