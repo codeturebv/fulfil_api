@@ -48,6 +48,20 @@ module FulfilApi
         all.each(&block)
       end
 
+      # Finds the first resource that matches the given conditions.
+      #
+      # It constructs a query using the `where` method, limits the result to one record,
+      #   and then returns the first result.
+      #
+      # @note Unlike the other methods in this module, `#find_by` will immediately trigger an
+      #   HTTP request to retrieve the resource, rather than allowing for lazy evaluation.
+      #
+      # @param conditions [Array<String, String, String>] The filter conditions as required by Fulfil.
+      # @return [FulfilApi::Resource, nil] The first resource that matches the conditions, or nil if no match is found.
+      def find_by(conditions)
+        where(conditions).limit(1).first
+      end
+
       # Loads resources from Fulfil's API based on the current filters, fields, and limits
       #   if they haven't been loaded yet.
       #
