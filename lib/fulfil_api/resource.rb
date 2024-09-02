@@ -5,6 +5,7 @@ module FulfilApi
   #   endpoints of Fulfil.
   class Resource
     include AttributeAssignable
+    include Queryable
 
     def initialize(attributes = {})
       @attributes = {}.with_indifferent_access
