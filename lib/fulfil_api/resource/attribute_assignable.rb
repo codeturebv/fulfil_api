@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require "base64"
-require "bigdecimal"
-
 module FulfilApi
   class Resource
     # The {FulfilApi::Resource::AttributeAssignable} module provides a set of helper

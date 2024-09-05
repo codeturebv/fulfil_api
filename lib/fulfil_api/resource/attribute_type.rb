@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "base64"
+require "bigdecimal"
+
 module FulfilApi
   class Resource
     # The {FulfilApi::Resource::AttributeType} enables parsing any attribute value
