@@ -6,10 +6,6 @@ module FulfilApi
       # The {FulfilApi::Resource::Relation::QueryMethods} extends the relation by
       #   adding query methods to it.
       module QueryMethods
-        # Custom error class for missing model name. The model name is required to be
-        #   able to build the API endpoint to perform the search/read HTTP request.
-        class ModelNameMissing < Error; end
-
         # Finds the first resource that matches the given conditions.
         #
         # It constructs a query using the `where` method, limits the result to one record,
