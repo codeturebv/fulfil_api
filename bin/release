@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+VERSION=$1
+
+# Bump the version of the gem
+printf "# frozen_string_literal: true\n\nmodule FulfilApi\n  VERSION = \"$VERSION\"\nend\n" > ./lib/fulfil_api/version.rb
+bundle
+
+# Run the final lint checks before releasing
+bin/rubocop
+
+# Check in the new gem version into GIT
+git add lib/fulfil_api/version.rb
+git commit -m "Bump version for $VERSION"
+git push
+git tag v$VERSION
+git push --tags
+
+# Build the gemspec and push it to rubygems.org
+gem build fulfil_api.gemspec
+gem push "fulfil_api-$VERSION.gem" --host https://rubygems.org
+rm "fulfil_api-$VERSION.gem"
