@@ -3,6 +3,7 @@
 require "zeitwerk"
 
 loader = Zeitwerk::Loader.for_gem
+loader.ignore("#{__dir__}/fulfil_api/test_helper.rb")
 loader.setup
 
 require "active_support"
