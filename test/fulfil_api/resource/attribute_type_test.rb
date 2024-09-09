@@ -69,6 +69,14 @@ module FulfilApi
         assert_equal BigDecimal("12.50256"), value
       end
 
+      def test_casting_capitalized_numeric_attribute_values
+        raw_value = { "__class__" => "Decimal", "decimal" => "12.50256" }
+        value = AttributeType.cast(raw_value)
+
+        assert_kind_of BigDecimal, value
+        assert_equal BigDecimal("12.50256"), value
+      end
+
       def test_casting_binary_attribute_values
         raw_value = { "__class__" => "bytes", "base64" => "aGVsbG93b3JsZA==\\n" }
         value = AttributeType.cast(raw_value)

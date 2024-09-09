@@ -25,7 +25,7 @@ module FulfilApi
 
       # @param value [Any]
       def initialize(value)
-        @type = extended?(value) ? value.fetch("__class__") : nil
+        @type = extended?(value) ? value.fetch("__class__").downcase : nil
         @value = value
       end
 
