@@ -6,8 +6,15 @@ module FulfilApi
   class Resource
     include AttributeAssignable
 
+    class ModelNameMissing < Error; end
+
     def initialize(attributes = {})
+      attributes.deep_stringify_keys!
+
       @attributes = {}.with_indifferent_access
+      @model_name = attributes.delete("model_name").presence ||
+                    raise(ModelNameMissing, "The model name is missing. Use the :model_name attribute to define it.")
+
       assign_attributes(attributes)
     end
 
@@ -39,11 +46,30 @@ module FulfilApi
       @attributes[attribute_name]
     end
 
+    # Builds a structure for keeping track of any errors when trying to use the
+    #   persistance methods for the API resource.
+    #
+    # @return [FulfilApi::Resource::Errors]
+    def errors
+      @errors ||= Errors.new(self)
+    end
+
+    # The {#id} is a shorthand to easily grab the ID of an API resource.
+    #
+    # @return [Integer, nil]
+    def id
+      @attributes["id"]
+    end
+
     # Returns all currently assigned attributes for a {FulfilApi::Resource}.
     #
     # @return [Hash]
     def to_h
       @attributes
     end
+
+    private
+
+    attr_reader :model_name
   end
 end
