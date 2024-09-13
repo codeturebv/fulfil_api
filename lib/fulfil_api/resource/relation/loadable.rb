@@ -17,7 +17,7 @@ module FulfilApi
         # Requires that {#name} is set; raises an exception if it's not.
         #
         # @return [true, false] True if the resources were loaded successfully.
-        def load
+        def load # rubocop:disable Metrics/MethodLength
           return true if loaded?
 
           if name.nil?
@@ -29,7 +29,10 @@ module FulfilApi
             body: { filters: conditions, fields: fields, limit: request_limit }.compact_blank
           )
 
-          @resources = response.map { |resource| @resource_klass.new(resource) }
+          @resources = response.map do |attributes|
+            @resource_klass.new(attributes.merge(model_name: name))
+          end
+
           @loaded = true
         end
 
