@@ -18,7 +18,7 @@ module FulfilApi
       #
       # @param code [String, Symbol] The error code.
       # @param message [String] A description of the error.
-      # @param type [String, Symbol] The type of the error (e.g., user, authorization).
+      # @param type [String, Symbol] The type of the error (e.g. user, authorization).
       # @return [Array<Hash>] The updated list of errors.
       #
       # @example Adding an error
