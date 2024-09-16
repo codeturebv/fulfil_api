@@ -6,7 +6,7 @@ module FulfilApi
     class Errors
       include Enumerable
 
-      delegate :each, :empty?, to: :@errors
+      delegate_missing_to :@errors
 
       # @param resource_klass [FulfilApi::Resource] The resource class that this Errors instance is associated with.
       def initialize(resource_klass)
