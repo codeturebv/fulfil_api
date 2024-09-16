@@ -5,6 +5,7 @@ module FulfilApi
   #   endpoints of Fulfil.
   class Resource
     include AttributeAssignable
+    include Persistable
 
     class ModelNameMissing < Error; end
 
