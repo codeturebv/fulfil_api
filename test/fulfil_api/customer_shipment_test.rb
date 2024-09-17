@@ -54,6 +54,16 @@ module FulfilApi
       end
     end
 
+    def test_ensure_correct_body_for_holding_shipments
+      stub_fulfil_request(:put, response: nil)
+
+      assert CustomerShipment.hold!([123, 456], note: "Double booking")
+
+      assert_requested :put, /fulfil\.io/ do |request|
+        assert_equal [[123, 456], { "note" => "Double booking" }], JSON.parse(request.body)
+      end
+    end
+
     def test_ensure_correct_body_for_unholding_shipment
       stub_fulfil_request(:put, response: nil)
 
@@ -61,6 +71,16 @@ module FulfilApi
 
       assert_requested :put, /fulfil\.io/ do |request|
         assert_equal [[123], { "note" => "All good!" }], JSON.parse(request.body)
+      end
+    end
+
+    def test_ensure_correct_body_for_unholding_shipments
+      stub_fulfil_request(:put, response: nil)
+
+      assert CustomerShipment.unhold!([123, 456], note: "All good!")
+
+      assert_requested :put, /fulfil\.io/ do |request|
+        assert_equal [[123, 456], { "note" => "All good!" }], JSON.parse(request.body)
       end
     end
 
