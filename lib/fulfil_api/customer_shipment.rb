@@ -18,7 +18,7 @@ module FulfilApi
       #   FulfilApi::CustomerShipment.hold(id: 123, note: "Double booking", hold_reason: hold_reason_id)
       def hold(id:, note: nil, hold_reason: nil)
         customer_shipment = new(id: [*id].flatten, model_name: MODEL_NAME)
-        customer_shipment.hold({ note: note, hold_reason: hold_reason })
+        customer_shipment.hold(note: note, hold_reason: hold_reason)
       end
 
       # Unholds the fulfillment status of the customer shipment
@@ -43,9 +43,12 @@ module FulfilApi
     #
     # @example Holds a customer_shipment
     #   customer_shipment.hold({note: "Double booking"})
-    def hold(attributes: nil)
+    def hold(note: nil, hold_reason: nil)
       if id.present?
-        FulfilApi.client.put("/model/#{MODEL_NAME}/hold", body: [[id], attributes&.compact_blank]) if id.present?
+        if id.present?
+          FulfilApi.client.put("/model/#{MODEL_NAME}/hold",
+                               body: [[id], { note: note, hold_reason: hold_reason }.compact_blank])
+        end
         return true
       end
 
