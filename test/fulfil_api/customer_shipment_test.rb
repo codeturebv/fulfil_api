@@ -20,25 +20,25 @@ module FulfilApi
       assert @customer_shipment.unhold
     end
 
-    def test_holding_fails_when_missing_id
-      refute CustomerShipment.new(model_name: CustomerShipment::MODEL_NAME).hold
+    def test_holding_makes_no_request_when_missing_id
+      assert_not_requested :put, /fulfil\.io/
+      CustomerShipment.new(model_name: CustomerShipment::MODEL_NAME).hold
     end
 
-    def test_uholding_fails_when_missing_id
-      refute CustomerShipment.new(model_name: CustomerShipment::MODEL_NAME).unhold
+    def test_uholding_makes_no_request_when_missing_id
+      assert_not_requested :put, /fulfil\.io/
+      CustomerShipment.new(model_name: CustomerShipment::MODEL_NAME).unhold
     end
 
     def test_holding_fails_when_fulfil_returns_error
       stub_fulfil_request(:put, response: { body: { message: "Missing Attributes" } }, status: 500)
 
-      refute @customer_shipment.hold
       assert_predicate @customer_shipment.errors, :present?
     end
 
     def test_unholding_fails_when_fulfil_returns_error
       stub_fulfil_request(:put, response: { body: { message: "Missing Attributes" } }, status: 500)
 
-      refute @customer_shipment.unhold
       assert_predicate @customer_shipment.errors, :present?
     end
   end
