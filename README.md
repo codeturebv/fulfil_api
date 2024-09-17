@@ -68,28 +68,28 @@ The gem uses an `ActiveRecord` like query interface to query the Fulfil API.
 
 ```ruby
 # Find one specific resource
-sales_order = FulfilApi::Resource.set(name: "sale.sale").find_by(["id", "=", 100])
+sales_order = FulfilApi::Resource.set(model_name: "sale.sale").find_by(["id", "=", 100])
 p sales_order["id"] # => 100
 
 # Find a list of resources
-sales_orders = FulfilApi::Resource.set(name: "sale.sale").where(["channel", "=", 4])
+sales_orders = FulfilApi::Resource.set(model_name: "sale.sale").where(["channel", "=", 4])
 p sales_orders.size # => 500 (standard number of resources returned by Fulfil)
 p sales_orders.first["id"] # => 10 (an example of an ID returned by Fulfil)
 
 # Find a limited list of resources
-sales_orders = FulfilApi::Resource.set(name: "sale.sale").where(["channel", "=", 4]).limit(50)
+sales_orders = FulfilApi::Resource.set(model_name: "sale.sale").where(["channel", "=", 4]).limit(50)
 p sales_orders.size # => 50
 
 # Include more resource details than the ID only
-sales_orders = FulfilApi::Resource.set(name: "sale.sale").select("reference").where(["channel", "=", 4])
+sales_orders = FulfilApi::Resource.set(model_name: "sale.sale").select("reference").where(["channel", "=", 4])
 p sales_orders.first["reference"] # => SO1234
 
 # Fetch nested data from a relation
-line_items = FulfilApi::Resource.set(name: "sale.line").select("sale.reference")
+line_items = FulfilApi::Resource.set(model_name: "sale.line").select("sale.reference")
 p line_items.first["sale"]["reference"] # => SO1234
 
 # Query nested data from a relation
-line_items = FulfilApi::Resource.set(name: "sale.line").where(["sale.reference", "=", "SO1234"])
+line_items = FulfilApi::Resource.set(model_name: "sale.line").where(["sale.reference", "=", "SO1234"])
 p line_items.first["id"] # => 10
 ```
 
@@ -100,14 +100,14 @@ p line_items.first["id"] # => 10
 Any data returned through the `FulfilApi` gem returns a list or a single `FulfilApi::Resource`. The data of the API resource is accessible through a `Hash`-like method.
 
 ```ruby
-sales_order = FulfilApi::Resource.set(name: "sale.sale").find_by(["id", "=", 100])
+sales_order = FulfilApi::Resource.set(model_name: "sale.sale").find_by(["id", "=", 100])
 p sales_order["id"] # => 100
 ```
 
 When you're requesting relational data for an API resource, you can access it in a similar manner.
 
 ```ruby
-sales_order = FulfilApi::Resource.set(name: "sale.sale").select("channel.name").find_by(["id", "=", 100])
+sales_order = FulfilApi::Resource.set(model_name: "sale.sale").select("channel.name").find_by(["id", "=", 100])
 p sales_order["channel"]["name"] # => Shopify
 ```
 
@@ -115,14 +115,14 @@ p sales_order["channel"]["name"] # => Shopify
 
 ```ruby
 # You can't do this
-FulfilApi::Resource.set(name: "sale.sale").select("lines.reference").find_by(["id", "=", 100])
+FulfilApi::Resource.set(model_name: "sale.sale").select("lines.reference").find_by(["id", "=", 100])
 
 # You can do this (BUT it's not recommended)
-sales_order = FulfilApi::Resource.set(name: "sale.sale").select("lines").find_by(["id", "=", 100])
-line_items = FulfilApi::Resource.set(name: "sale.line").where(["id", "in", sales_order["lines"]])
+sales_order = FulfilApi::Resource.set(model_name: "sale.sale").select("lines").find_by(["id", "=", 100])
+line_items = FulfilApi::Resource.set(model_name: "sale.line").where(["id", "in", sales_order["lines"]])
 
 # You can do this (recommended)
-line_items = FulfilApi::Resource.set(name: "sale.line").find_by(["sale.id", "=", 100])
+line_items = FulfilApi::Resource.set(model_name: "sale.line").find_by(["sale.id", "=", 100])
 ```
 
 ## Development

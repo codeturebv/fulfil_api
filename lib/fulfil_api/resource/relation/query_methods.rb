@@ -41,10 +41,10 @@ module FulfilApi
         #   depending on the API's limitations.
         #
         # @example Requesting nested data fields
-        #   FulfilApi::Resource.set(name: "sale.line").select("sale.reference").find_by(["id", "=", 10])
+        #   FulfilApi::Resource.set(model_name: "sale.line").select("sale.reference").find_by(["id", "=", 10])
         #
         # @example Requesting additional fields
-        #   FulfilApi::Resource.set(name: "sale.sale").select(:reference).find_by(["id", "=", 10])
+        #   FulfilApi::Resource.set(model_name: "sale.sale").select(:reference).find_by(["id", "=", 10])
         #
         # @param fields [Array<Symbol, String>] The fields to include in the response.
         # @return [FulfilApi::Resource::Relation] A new {Relation} instance with the selected fields.
@@ -59,7 +59,7 @@ module FulfilApi
         #   as arrays according to the Fulfil API documentation.
         #
         # @example Simple querying with conditions
-        #   FulfilApi::Resource.set(name: "sale.line").where(["sale.reference", "=", "ORDER-123"])
+        #   FulfilApi::Resource.set(model_name: "sale.line").where(["sale.reference", "=", "ORDER-123"])
         #
         # @todo Enhance the {#where} method to allow more natural and flexible queries.
         #
