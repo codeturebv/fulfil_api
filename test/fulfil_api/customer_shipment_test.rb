@@ -32,12 +32,14 @@ module FulfilApi
 
     def test_holding_fails_when_fulfil_returns_error
       stub_fulfil_request(:put, response: { body: { message: "Missing Attributes" } }, status: 500)
+      @customer_shipment.hold
 
       assert_predicate @customer_shipment.errors, :present?
     end
 
     def test_unholding_fails_when_fulfil_returns_error
       stub_fulfil_request(:put, response: { body: { message: "Missing Attributes" } }, status: 500)
+      @customer_shipment.unhold
 
       assert_predicate @customer_shipment.errors, :present?
     end
