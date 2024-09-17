@@ -12,7 +12,7 @@ module FulfilApi
       def test_all_returns_found_resources
         stub_fulfil_request(:put, response: [{ id: 100 }, { id: 200 }, { id: 300 }], model: "sale.sale")
 
-        sales_orders = @relation.set(name: "sale.sale").all
+        sales_orders = @relation.set(model_name: "sale.sale").all
 
         assert sales_orders.all?(FulfilApi::Resource)
       end
@@ -22,7 +22,7 @@ module FulfilApi
 
         assert_not_requested :put, %r{sale.sale/search_read}i, times: 1
 
-        @relation.set(name: "sale.sale").each do |sales_order|
+        @relation.set(model_name: "sale.sale").each do |sales_order|
           assert_kind_of FulfilApi::Resource, sales_order
         end
 
@@ -32,7 +32,7 @@ module FulfilApi
       def test_finding_the_first_result_effectively
         stub_fulfil_request(:put, response: [{ id: 100 }], model: "sale.sale")
 
-        @relation.set(name: "sale.sale").find_by(["id", "=", 100])
+        @relation.set(model_name: "sale.sale").find_by(["id", "=", 100])
 
         assert_requested :put, %r{sale.sale/search_read}i do |request|
           parsed_body = JSON.parse(request.body)
@@ -46,7 +46,7 @@ module FulfilApi
         stub_fulfil_request(:put, response: [{ id: 100 }], model: "sale.sale")
 
         @relation
-          .set(name: "sale.sale")
+          .set(model_name: "sale.sale")
           .select("name", "reference")
           .where(["id", "=", 100])
           .limit(10)
@@ -64,7 +64,7 @@ module FulfilApi
       def test_caching_for_consecutive_loads
         stub_fulfil_request(:put, response: [{ id: 100 }, { id: 200 }, { id: 300 }], model: "sale.sale")
 
-        sales_orders = @relation.set(name: "sale.sale")
+        sales_orders = @relation.set(model_name: "sale.sale")
 
         sales_orders.load # This will load the resources from the API.
         sales_orders.load # This won't trigger an additional HTTP request as it's already loaded
@@ -76,7 +76,7 @@ module FulfilApi
       def test_loading_resources_marks_relation_as_loaded
         stub_fulfil_request(:put, response: [{ id: 100 }, { id: 200 }, { id: 300 }], model: "sale.sale")
 
-        sales_orders = @relation.set(name: "sale.sale")
+        sales_orders = @relation.set(model_name: "sale.sale")
 
         refute_predicate sales_orders, :loaded?
 
@@ -125,13 +125,13 @@ module FulfilApi
       end
 
       def test_setting_the_name
-        assert_equal "sale.sale", @relation.set(name: "sale.sale").name
+        assert_equal "sale.sale", @relation.set(model_name: "sale.sale").model_name
       end
 
       def test_reloading_resources_from_the_api
         stub_fulfil_request(:put, response: [{ id: 100 }, { id: 200 }, { id: 300 }], model: "sale.sale")
 
-        sales_orders = @relation.set(name: "sale.sale")
+        sales_orders = @relation.set(model_name: "sale.sale")
 
         sales_orders.load # This causes the sales orders to be loaded first.
         sales_orders.reload # This causes the sales orders to be reloaded from the API.

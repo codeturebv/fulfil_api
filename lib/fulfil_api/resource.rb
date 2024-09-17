@@ -31,7 +31,7 @@ module FulfilApi
       #   forwarded to the {FulfilApi::Resource.relation}.
       #
       # @example forwarding of the .where class method
-      #   FulfilApi::Resource.set(name: "sale.sale").find_by(["id", "=", 100])
+      #   FulfilApi::Resource.set(model_name: "sale.sale").find_by(["id", "=", 100])
       #
       # @return [FulfilApi::Resource::Relation]
       def relation

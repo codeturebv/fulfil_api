@@ -19,11 +19,11 @@ module FulfilApi
         #
         # @todo In the future, derive the {#name} from the @resource_klass automatically.
         #
-        # @param name [String] The name of the resource model in Fulfil.
+        # @param model_name [String] The name of the resource model in Fulfil.
         # @return [FulfilApi::Resource::Relation] A new {Relation} instance with the model name set.
-        def set(name:)
+        def set(model_name:)
           clone.tap do |relation|
-            relation.name = name
+            relation.model_name = model_name
           end
         end
       end

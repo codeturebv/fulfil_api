@@ -14,23 +14,23 @@ module FulfilApi
         # Loads resources from Fulfil's API based on the current filters, fields, and limits
         #   if they haven't been loaded yet.
         #
-        # Requires that {#name} is set; raises an exception if it's not.
+        # Requires that {#model_name} is set; raises an exception if it's not.
         #
         # @return [true, false] True if the resources were loaded successfully.
         def load # rubocop:disable Metrics/MethodLength
           return true if loaded?
 
-          if name.nil?
+          if model_name.nil?
             raise FulfilApi::Resource::Relation::ModelNameMissing, "The model name is missing. Use #set to define it."
           end
 
           response = FulfilApi.client.put(
-            "/model/#{name}/search_read",
+            "/model/#{model_name}/search_read",
             body: { filters: conditions, fields: fields, limit: request_limit }.compact_blank
           )
 
           @resources = response.map do |attributes|
-            @resource_klass.new(attributes.merge(model_name: name))
+            @resource_klass.new(attributes.merge(model_name: model_name))
           end
 
           @loaded = true

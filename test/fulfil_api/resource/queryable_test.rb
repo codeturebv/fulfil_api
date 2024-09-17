@@ -14,17 +14,17 @@ module FulfilApi
       end
 
       def test_chainability_of_request_options
-        request = FulfilApi::Resource.set(name: "sale.sale").where(["id", "=", 100]).limit(50)
+        request = FulfilApi::Resource.set(model_name: "sale.sale").where(["id", "=", 100]).limit(50)
 
         assert_equal [["id", "=", 100]], request.conditions
-        assert_equal "sale.sale", request.name
+        assert_equal "sale.sale", request.model_name
         assert_equal 50, request.request_limit
       end
 
       def test_deffering_http_request_until_enumeration_actions
         stub_fulfil_request(:put, model: "sale.sale")
 
-        request = FulfilApi::Resource.set(name: "sale.sale").where(["id", "=", 100]).limit(50)
+        request = FulfilApi::Resource.set(model_name: "sale.sale").where(["id", "=", 100]).limit(50)
 
         assert_not_requested :put, %r{sale.sale/search_read}i
 
