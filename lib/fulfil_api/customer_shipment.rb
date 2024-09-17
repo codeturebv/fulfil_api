@@ -75,11 +75,5 @@ module FulfilApi
       handle_error(e)
       false
     end
-
-    private
-
-    def handle_error(err)
-      errors.add(code: err.details[:response_status], type: :system, message: err.details[:response_body])
-    end
   end
 end
