@@ -29,7 +29,8 @@ module FulfilApi
 
       # Unholds the fulfillment status of the customer shipment
       #
-      # @param id_or_ids [String, Integer, Array[String], Array[Integer]] The ID(s) of the customer shipment(s) to unhold.
+      # @param id_or_ids [String, Integer, Array[String], Array[Integer]]
+      #   The ID(s) of the customer shipment(s) to unhold.
       # @param note [String] A note to define the reason for unholding.
       # @return [Boolean] Returns true if hold successfully.
       # @raise [FulfilApi::Error] If an error occurs during holding the customer shipment.
