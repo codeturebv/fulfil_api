@@ -49,6 +49,17 @@ module FulfilApi
         assert_requested :put, /fulfil\.io/
       end
 
+      def test_saving_resource_with_updated_attributes
+        stub_fulfil_request(:put, response: @attributes)
+
+        @resource.assign_attributes(state: "done")
+        @resource.save
+
+        assert_requested :put, /fulfil\.io/ do |request|
+          assert_equal @attributes.merge(state: "done").deep_stringify_keys, JSON.parse(request.body)
+        end
+      end
+
       def test_saving_an_invalid_resource_with_bang
         stub_fulfil_request(:put, response: @user_error, status: 423)
 
