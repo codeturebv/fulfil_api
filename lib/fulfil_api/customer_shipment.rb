@@ -58,7 +58,7 @@ module FulfilApi
     def hold(note: nil, hold_reason: nil)
       self.class.hold!(id, note: note, hold_reason: hold_reason)
     rescue FulfilApi::Error => e
-      handle_error(e)
+      handle_exception(e)
       false
     end
 
@@ -72,7 +72,7 @@ module FulfilApi
     def unhold(note: nil)
       self.class.unhold!(id, note: note)
     rescue FulfilApi::Error => e
-      handle_error(e)
+      handle_exception(e)
       false
     end
   end

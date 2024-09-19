@@ -73,7 +73,7 @@ module FulfilApi
 
     attr_reader :model_name
 
-    def handle_error(err) # rubocop:disable Metrics/AbcSize
+    def handle_exception(err) # rubocop:disable Metrics/AbcSize
       case (error = JSON.parse(err.details[:response_body]).deep_symbolize_keys!)
       in { type: "UserError" }
         errors.add(code: error[:code], type: :user, message: error[:message])

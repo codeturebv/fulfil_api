@@ -52,7 +52,7 @@ module FulfilApi
       def save
         save!
       rescue FulfilApi::Error => e
-        handle_error(e)
+        handle_exception(e)
       end
 
       # Saves the current resource, raising an error if it cannot be saved.
