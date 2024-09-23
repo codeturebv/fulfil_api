@@ -52,14 +52,7 @@ module FulfilApi
       def save
         save!
       rescue FulfilApi::Error => e
-        case (error = JSON.parse(e.details[:response_body]).deep_symbolize_keys!)
-        in { type: "UserError" }
-          errors.add(code: error[:code], type: :user, message: error[:message])
-        in { code: Integer, name: String, description: String }
-          errors.add(code: error[:code], type: :authorization, message: error[:description])
-        end
-
-        self
+        handle_exception(e)
       end
 
       # Saves the current resource, raising an error if it cannot be saved.
