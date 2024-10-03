@@ -11,37 +11,37 @@ module FulfilApi
     def test_holding_shipment_successfully_from_instance
       stub_fulfil_request(:put, response: nil)
 
-      assert @customer_shipment.hold
+      assert @customer_shipment.hold("Wait until default hold period expired")
     end
 
     def test_holding_shipment_successfully_from_class
       stub_fulfil_request(:put, response: nil)
 
-      assert CustomerShipment.hold!(123)
+      assert CustomerShipment.hold!(123, note: "Wait until default hold period expired")
     end
 
     def test_holding_shipments_successfully_from_class
       stub_fulfil_request(:put, response: nil)
 
-      assert CustomerShipment.hold!([123, 456])
+      assert CustomerShipment.hold!([123, 456], note: "Hold all until default hold period expired")
     end
 
     def test_unholding_shipment_successfully_from_instance
       stub_fulfil_request(:put, response: nil)
 
-      assert @customer_shipment.unhold
+      assert @customer_shipment.unhold("The wait is over")
     end
 
     def test_unholding_shipment_successfully_from_class
       stub_fulfil_request(:put, response: nil)
 
-      assert CustomerShipment.unhold!(123)
+      assert CustomerShipment.unhold!(123, note: "The wait is over")
     end
 
     def test_unholding_shipments_successfully_from_class
       stub_fulfil_request(:put, response: nil)
 
-      assert CustomerShipment.unhold!([123, 456])
+      assert CustomerShipment.unhold!([123, 456], note: "The wait for all shipments is over")
     end
 
     def test_ensure_correct_body_for_holding_shipment
@@ -50,7 +50,7 @@ module FulfilApi
       assert CustomerShipment.hold!(123, note: "Double booking")
 
       assert_requested :put, /fulfil\.io/ do |request|
-        assert_equal [[123], { "note" => "Double booking" }], JSON.parse(request.body)
+        assert_equal [[123], "Double booking"], JSON.parse(request.body)
       end
     end
 
@@ -60,27 +60,27 @@ module FulfilApi
       assert CustomerShipment.hold!([123, 456], note: "Double booking")
 
       assert_requested :put, /fulfil\.io/ do |request|
-        assert_equal [[123, 456], { "note" => "Double booking" }], JSON.parse(request.body)
+        assert_equal [[123, 456], "Double booking"], JSON.parse(request.body)
       end
     end
 
     def test_ensure_correct_body_for_unholding_shipment
       stub_fulfil_request(:put, response: nil)
 
-      assert CustomerShipment.unhold!(123, note: "All good!")
+      assert CustomerShipment.unhold!(123, note: "Issue has been resolved")
 
       assert_requested :put, /fulfil\.io/ do |request|
-        assert_equal [[123], { "note" => "All good!" }], JSON.parse(request.body)
+        assert_equal [[123], "Issue has been resolved"], JSON.parse(request.body)
       end
     end
 
     def test_ensure_correct_body_for_unholding_shipments
       stub_fulfil_request(:put, response: nil)
 
-      assert CustomerShipment.unhold!([123, 456], note: "All good!")
+      assert CustomerShipment.unhold!([123, 456], note: "The issues have been resolved")
 
       assert_requested :put, /fulfil\.io/ do |request|
-        assert_equal [[123, 456], { "note" => "All good!" }], JSON.parse(request.body)
+        assert_equal [[123, 456], "The issues have been resolved"], JSON.parse(request.body)
       end
     end
 
@@ -88,7 +88,7 @@ module FulfilApi
       stub_fulfil_request(:put, response: { body: { message: "Missing Attributes" } }, status: 500)
 
       assert_raises FulfilApi::Error do
-        CustomerShipment.hold!(123)
+        CustomerShipment.hold!(123, note: "Please hold off shipping this shipment")
       end
     end
 
@@ -96,20 +96,20 @@ module FulfilApi
       stub_fulfil_request(:put, response: { body: { message: "Missing Attributes" } }, status: 500)
 
       assert_raises FulfilApi::Error do
-        CustomerShipment.unhold!(123)
+        CustomerShipment.unhold!(123, note: "Ship out this shipment")
       end
     end
 
     def test_holding_fails_when_fulfil_returns_error
       stub_fulfil_request(:put, response: { body: { message: "Missing Attributes" } }, status: 500)
-      @customer_shipment.hold
+      @customer_shipment.hold("Please hold off shipping this shipment")
 
       assert_predicate @customer_shipment.errors, :present?
     end
 
     def test_unholding_fails_when_fulfil_returns_error
       stub_fulfil_request(:put, response: { body: { message: "Missing Attributes" } }, status: 500)
-      @customer_shipment.unhold
+      @customer_shipment.unhold("Ship out this shipment")
 
       assert_predicate @customer_shipment.errors, :present?
     end
