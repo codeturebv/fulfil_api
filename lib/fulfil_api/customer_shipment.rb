@@ -49,7 +49,7 @@ module FulfilApi
     # @return [Boolean] Returns true if hold successfully, otherwise false.
     #
     # @example Holds a customer_shipment
-    #   customer_shipment.hold(note: "Double booking")
+    #   customer_shipment.hold("Holding the shipment for 30 minutes to allow edits to the order")
     def hold(note)
       self.class.hold!(id, note: note)
     rescue FulfilApi::Error => e
@@ -63,7 +63,7 @@ module FulfilApi
     # @return [Boolean] Returns true if unhold successfully, otherwise false.
     #
     # @example Unholds a customer_shipment
-    #   customer_shipment.unhold(note: "Double booking")
+    #   customer_shipment.unhold("Ship out these items to the customer")
     def unhold(note)
       self.class.unhold!(id, note: note)
     rescue FulfilApi::Error => e
