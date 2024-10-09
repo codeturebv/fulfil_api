@@ -67,7 +67,7 @@ module FulfilApi
         # @return [FulfilApi::Resource::Relation] A new {Relation} instance with the conditions applied.
         def where(conditions)
           clone.tap do |relation|
-            relation.conditions << conditions.flatten
+            relation.conditions << conditions
             relation.conditions.uniq!
           end
         end
