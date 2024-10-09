@@ -151,8 +151,8 @@ module FulfilApi
         assert_equal [["id", "=", 100], ["line.code", "ilike", "SKU-%"]], chained_relation.conditions
       end
 
-      def test_flattening_to_deeply_nested_arrays_when_querying
-        assert_equal [["id", "=", 100]], @relation.where([["id", "=", 100]]).conditions
+      def test_flattening_purposely_nested_arrays_when_querying
+        assert_equal [["id", "in", [10, 20]]], @relation.where(["id", "in", [10, 20]]).conditions
       end
     end
   end
