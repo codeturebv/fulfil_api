@@ -14,7 +14,7 @@ module FulfilApi
       class_methods do
         # Creates a new resource on the model name.
         #
-        # @param model_name [String] The name of hte model to which the resource belongs.
+        # @param model_name [String] The name of the model to which the resource belongs.
         # @params attributes [Hash] The attributes to create the resource with.
         # @return [FulfilApi::Resource] The created resource.
         #
@@ -27,7 +27,7 @@ module FulfilApi
 
         # Creates a new resource on the model name, raising an error if the create fails.
         #
-        # @param model_name [String] The name of hte model to which the resource belongs.
+        # @param model_name [String] The name of the model to which the resource belongs.
         # @params attributes [Hash] The attributes to create the resource with.
         # @return [FulfilApi::Resource] The created resource.
         # @raise [FulfilApi::Error] If the create fails.
