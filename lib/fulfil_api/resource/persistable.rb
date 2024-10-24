@@ -12,6 +12,33 @@ module FulfilApi
       extend ActiveSupport::Concern
 
       class_methods do
+        # Creates a new resource on the model name.
+        #
+        # @param model_name [String] The name of hte model to which the resource belongs.
+        # @params attributes [Hash] The attributes to create the resource with.
+        # @return [FulfilApi::Resource] The created resource.
+        #
+        # @example Creating a resource
+        #   FulfilApi::Resource.create(model_name: "sale.sale", reference: "MK123")
+        def create(model_name:, **attributes)
+          resource = new(model_name: model_name)
+          resource.create(attributes)
+        end
+
+        # Creates a new resource on the model name, raising an error if the create fails.
+        #
+        # @param model_name [String] The name of hte model to which the resource belongs.
+        # @params attributes [Hash] The attributes to create the resource with.
+        # @return [FulfilApi::Resource] The created resource.
+        # @raise [FulfilApi::Error] If the create fails.
+        #
+        # @example Creating a resource
+        #   FulfilApi::Resource.create!(model_name: "sale.sale", reference: "MK123")
+        def create!(model_name:, **attributes)
+          resource = new(model_name: model_name)
+          resource.create!(attributes)
+        end
+
         # Updates a resource by its ID and model name.
         #
         # @param id [String, Integer] The ID of the resource to update.
@@ -42,6 +69,31 @@ module FulfilApi
         end
       end
 
+      # Creates a resource with the given attributes and saves it.
+      #
+      # @param attributes [Hash] The attributes to assign to the resource.
+      # @return [FulfilApi::Resource] The created resource.
+      #
+      # @example Creating a resource
+      #   resource.create(reference: "MK123")
+      def create(attributes)
+        assign_attributes(attributes)
+        save
+      end
+
+      # Creates a resource with the given attributes and saves it, raising an error if saving fails.
+      #
+      # @param attributes [Hash] The attributes to assign to the resource.
+      # @return [FulfilApi::Resource] The created resource.
+      # @raise [FulfilApi::Error] If an error occurs during the create.
+      #
+      # @example Creating a resource with error raising
+      #   resource.create(reference: "MK123")
+      def create!(attributes)
+        assign_attributes(attributes)
+        save!
+      end
+
       # Saves the current resource, rescuing any errors that occur and handling them based on error type.
       #
       # @return [FulfilApi::Resource, nil] Returns the resource if saved successfully, otherwise nil.
@@ -67,8 +119,8 @@ module FulfilApi
 
         if id.present?
           FulfilApi.client.put("/model/#{model_name}/#{id}", body: to_h)
-        else # rubocop:disable Style/EmptyElse
-          # TODO: Implement the {#create} and {#create!} methods to save a new resource
+        else
+          FulfilApi.client.post("/model/#{model_name}", body: to_h)
         end
 
         self
