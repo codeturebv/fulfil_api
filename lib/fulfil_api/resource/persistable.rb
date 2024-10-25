@@ -16,13 +16,15 @@ module FulfilApi
         #
         # @param model_name [String] The name of the model to which the resource belongs.
         # @params attributes [Hash] The attributes to create the resource with.
-        # @return [FulfilApi::Resource] The created resource.
+        # @return [FulfilApi::Resource, false] The created resource.
         #
         # @example Creating a resource
         #   FulfilApi::Resource.create(model_name: "sale.sale", reference: "MK123")
         def create(model_name:, **attributes)
           resource = new(model_name: model_name)
           resource.create(attributes)
+        rescue FulfilApi::Error
+          false
         end
 
         # Creates a new resource on the model name, raising an error if the create fails.
@@ -44,13 +46,15 @@ module FulfilApi
         # @param id [String, Integer] The ID of the resource to update.
         # @param model_name [String] The name of the model to which the resource belongs.
         # @param attributes [Hash] The attributes to update on the resource.
-        # @return [FulfilApi::Resource] The updated resource.
+        # @return [FulfilApi::Resource, false] The updated resource.
         #
         # @example Updating a resource
         #   FulfilApi::Resource.update(id: 123, model_name: "sale.sale", reference: "MK123")
         def update(id:, model_name:, **attributes)
           resource = new(id: id, model_name: model_name)
           resource.update(attributes)
+        rescue FulfilApi::Error
+          false
         end
 
         # Updates a resource by its ID and model name, raising an error if the update fails.

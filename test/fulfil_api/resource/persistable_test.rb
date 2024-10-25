@@ -12,9 +12,7 @@ module FulfilApi
       end
 
       def test_updating_resource_klass_requires_id_and_model_name
-        assert_raises FulfilApi::Error do
-          FulfilApi::Resource.update(id: nil, model_name: nil, state: "done")
-        end
+        refute FulfilApi::Resource.update(id: nil, model_name: nil, state: "done")
 
         assert_raises FulfilApi::Error do
           FulfilApi::Resource.update!(id: nil, model_name: nil, state: "done")
@@ -38,9 +36,7 @@ module FulfilApi
       end
 
       def test_creating_resource_klass_requires_model_name
-        assert_raises FulfilApi::Error do
-          FulfilApi::Resource.create(model_name: nil, state: "done")
-        end
+        refute FulfilApi::Resource.create(model_name: nil, state: "done")
 
         assert_raises FulfilApi::Error do
           FulfilApi::Resource.create!(model_name: nil, state: "done")
