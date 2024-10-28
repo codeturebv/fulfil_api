@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module FulfilApi
-  VERSION = ""
+  VERSION = "0.1.3"
 end
