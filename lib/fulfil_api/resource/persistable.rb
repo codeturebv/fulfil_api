@@ -12,18 +12,49 @@ module FulfilApi
       extend ActiveSupport::Concern
 
       class_methods do
+        # Creates a new resource on the model name.
+        #
+        # @param model_name [String] The name of the model to which the resource belongs.
+        # @params attributes [Hash] The attributes to create the resource with.
+        # @return [FulfilApi::Resource, false] The created resource.
+        #
+        # @example Creating a resource
+        #   FulfilApi::Resource.create(model_name: "sale.sale", reference: "MK123")
+        def create(model_name:, **attributes)
+          resource = new(model_name: model_name)
+          resource.create(attributes)
+        rescue FulfilApi::Error
+          false
+        end
+
+        # Creates a new resource on the model name, raising an error if the create fails.
+        #
+        # @param model_name [String] The name of the model to which the resource belongs.
+        # @params attributes [Hash] The attributes to create the resource with.
+        # @return [FulfilApi::Resource] The created resource.
+        # @raise [FulfilApi::Error] If the create fails.
+        #
+        # @example Creating a resource
+        #   FulfilApi::Resource.create!(model_name: "sale.sale", reference: "MK123")
+        def create!(model_name:, **attributes)
+          resource = new(model_name: model_name)
+          resource.create!(attributes)
+        end
+
         # Updates a resource by its ID and model name.
         #
         # @param id [String, Integer] The ID of the resource to update.
         # @param model_name [String] The name of the model to which the resource belongs.
         # @param attributes [Hash] The attributes to update on the resource.
-        # @return [FulfilApi::Resource] The updated resource.
+        # @return [FulfilApi::Resource, false] The updated resource.
         #
         # @example Updating a resource
         #   FulfilApi::Resource.update(id: 123, model_name: "sale.sale", reference: "MK123")
         def update(id:, model_name:, **attributes)
           resource = new(id: id, model_name: model_name)
           resource.update(attributes)
+        rescue FulfilApi::Error
+          false
         end
 
         # Updates a resource by its ID and model name, raising an error if the update fails.
@@ -40,6 +71,31 @@ module FulfilApi
           resource = new(id: id, model_name: model_name)
           resource.update!(attributes)
         end
+      end
+
+      # Creates a resource with the given attributes and saves it.
+      #
+      # @param attributes [Hash] The attributes to assign to the resource.
+      # @return [FulfilApi::Resource] The created resource.
+      #
+      # @example Creating a resource
+      #   resource.create(reference: "MK123")
+      def create(attributes)
+        assign_attributes(attributes)
+        save
+      end
+
+      # Creates a resource with the given attributes and saves it, raising an error if saving fails.
+      #
+      # @param attributes [Hash] The attributes to assign to the resource.
+      # @return [FulfilApi::Resource] The created resource.
+      # @raise [FulfilApi::Error] If an error occurs during the create.
+      #
+      # @example Creating a resource with error raising
+      #   resource.create(reference: "MK123")
+      def create!(attributes)
+        assign_attributes(attributes)
+        save!
       end
 
       # Saves the current resource, rescuing any errors that occur and handling them based on error type.
@@ -67,8 +123,8 @@ module FulfilApi
 
         if id.present?
           FulfilApi.client.put("/model/#{model_name}/#{id}", body: to_h)
-        else # rubocop:disable Style/EmptyElse
-          # TODO: Implement the {#create} and {#create!} methods to save a new resource
+        else
+          FulfilApi.client.post("/model/#{model_name}", body: to_h)
         end
 
         self

@@ -12,9 +12,7 @@ module FulfilApi
       end
 
       def test_updating_resource_klass_requires_id_and_model_name
-        assert_raises FulfilApi::Error do
-          FulfilApi::Resource.update(id: nil, model_name: nil, state: "done")
-        end
+        refute FulfilApi::Resource.update(id: nil, model_name: nil, state: "done")
 
         assert_raises FulfilApi::Error do
           FulfilApi::Resource.update!(id: nil, model_name: nil, state: "done")
@@ -37,8 +35,23 @@ module FulfilApi
         assert_equal @attributes.merge(state: "done").deep_stringify_keys, @resource.to_h
       end
 
+      def test_creating_resource_klass_requires_model_name
+        refute FulfilApi::Resource.create(model_name: nil, state: "done")
+
+        assert_raises FulfilApi::Error do
+          FulfilApi::Resource.create!(model_name: nil, state: "done")
+        end
+      end
+
       def test_saving_resource_without_id
-        skip "the #create method(s) have not been implemented yet"
+        resource = Resource.new(model_name: "sale.sale")
+        stub_fulfil_request(:post, response: @attributes, status: 200, model_name: "sale.sale")
+
+        resource.create(state: "done")
+
+        assert_requested :post, /fulfil\.io/ do |request|
+          assert_equal({ "state" => "done" }, JSON.parse(request.body))
+        end
       end
 
       def test_saving_resource_with_id
