@@ -154,6 +154,24 @@ module FulfilApi
       def test_flattening_purposely_nested_arrays_when_querying
         assert_equal [["id", "in", [10, 20]]], @relation.where(["id", "in", [10, 20]]).conditions
       end
+
+      def test_creating_resource_klass_requires_model_name
+        refute FulfilApi::Resource.set(model_name: nil).create({ state: "done" })
+
+        assert_raises FulfilApi::Error do
+          FulfilApi::Resource.set(model_name: nil).create!({ state: "done" })
+        end
+      end
+
+      def test_creating_new_resource
+        stub_fulfil_request(:post, response: [@attributes], status: 200, model_name: "sale.sale")
+
+        FulfilApi::Resource.set(model_name: "sale.sale").create({ state: "done" })
+
+        assert_requested :post, /fulfil\.io/ do |request|
+          assert_equal([{ "state" => "done" }], JSON.parse(request.body))
+        end
+      end
     end
   end
 end
