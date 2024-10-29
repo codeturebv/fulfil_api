@@ -12,6 +12,7 @@ module FulfilApi
       include Loadable
       include Naming
       include QueryMethods
+      include Persistable
 
       attr_accessor :conditions, :fields, :model_name, :request_limit
 
