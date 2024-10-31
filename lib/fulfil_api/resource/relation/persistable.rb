@@ -31,7 +31,6 @@ module FulfilApi
           raise ModelNameMissing, "The model name is missing. Use #set to define it." if model_name.nil?
 
           response = FulfilApi.client.post("/model/#{model_name}", body: attributes.flatten)
-
           return response.first if response.one?
 
           response
