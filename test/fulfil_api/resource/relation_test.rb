@@ -172,6 +172,16 @@ module FulfilApi
           assert_equal([{ "state" => "done" }], JSON.parse(request.body))
         end
       end
+
+      def test_creating_multiple_resources
+        stub_fulfil_request(:post, response: [@attributes], status: 200, model_name: "sale.sale")
+
+        FulfilApi::Resource.set(model_name: "sale.sale").create([{ state: "done" }, [{ state: "pending" }]])
+
+        assert_requested :post, /fulfil\.io/ do |request|
+          assert_equal([{ "state" => "done" }, { "state" => "pending" }], JSON.parse(request.body))
+        end
+      end
     end
   end
 end
