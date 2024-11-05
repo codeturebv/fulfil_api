@@ -14,15 +14,17 @@ module FulfilApi
     end
 
     def test_default_configuration_values
-      assert_equal "v2", @config.api_version
+      assert_equal Configuration::DEFAULT_API_VERSION, @config.api_version
       assert_nil @config.merchant_id
+      assert_equal Configuration::DEFAULT_REQUEST_OPTIONS, @config.request_options
     end
 
     def test_initialize_with_custom_options
-      config = FulfilApi::Configuration.new(api_version: "v1", merchant_id: "codeture")
+      config = FulfilApi::Configuration.new(api_version: "v1", merchant_id: "codeture", request_options: { timeout: 1 })
 
       assert_equal "v1", config.api_version
       assert_equal "codeture", config.merchant_id
+      assert_equal({ timeout: 1 }, config.request_options)
     end
 
     def test_configuration_update

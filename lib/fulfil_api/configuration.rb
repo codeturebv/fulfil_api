@@ -6,7 +6,10 @@ module FulfilApi
   # This model holds configuration settings and provides thread-safe access
   #   to these settings.
   class Configuration
-    attr_accessor :access_token, :api_version, :merchant_id
+    attr_accessor :access_token, :api_version, :merchant_id, :request_options
+
+    DEFAULT_API_VERSION = "v2"
+    DEFAULT_REQUEST_OPTIONS = { open_timeout: 1, read_timeout: 5, write_timeout: 5, timeout: 5 }.freeze
 
     # Initializes the configuration with optional settings.
     #
@@ -52,7 +55,8 @@ module FulfilApi
     #
     # @return [void]
     def set_default_options
-      self.api_version = "v2" if api_version.nil?
+      self.api_version = DEFAULT_API_VERSION if api_version.nil?
+      self.request_options = DEFAULT_REQUEST_OPTIONS if request_options.nil?
     end
   end
 
