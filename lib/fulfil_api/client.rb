@@ -58,8 +58,11 @@ module FulfilApi
 
     # @return [Faraday::Connection]
     def connection
-      # TODO: Allow passing configuration options for the request
-      @connection ||= Faraday.new(headers: request_headers, url: api_endpoint) do |connection|
+      @connection ||= Faraday.new(
+        headers: request_headers,
+        url: api_endpoint,
+        request: configuration.request_options
+      ) do |connection|
         connection.adapter :net_http_persistent # TODO: Allow passing configuration options
 
         # Configuration of the request middleware
