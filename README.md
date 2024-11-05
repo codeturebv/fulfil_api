@@ -60,6 +60,8 @@ The following configuration options are (currently) available throught both conf
 
 - `merchant_id` (`String`): The `merchant_id` is the subdomain that the Fulfil instance is hosted on. This configuration option is required to be able to query Fulfil's API endpoints.
 
+- `request_options` (`Hash`): The `request_options` are the configuration options for the HTTP client. See [https://lostisland.github.io/faraday/#/customization/request-options](https://lostisland.github.io/faraday/#/customization/request-options) in `faraday`.
+
 ### Querying the Fulfil API
 
 > **NOTE:** Currently, the gem is under heavy development. The querying interface of the gem is really basic at the moment. In the future, we will closer match the querying interface of `ActiveRecord`.
