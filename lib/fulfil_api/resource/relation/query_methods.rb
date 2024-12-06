@@ -21,6 +21,18 @@ module FulfilApi
           where(conditions).limit(1).first
         end
 
+        # Finds the first resource that matches the given conditions and raises
+        #   when no resource is found.
+        #
+        # @see .find_by
+        #
+        # @param conditions [Array<String, String, String>] The filter conditions as required by Fulfil.
+        # @return [FulfilApi::Resource] The first resource that matches the conditions
+        # @raise [FulfilApi::Resource::NotFound]
+        def find_by!(conditions)
+          find_by(conditions) || raise(NotFound, "Unable to find #{model_name} where #{conditions}")
+        end
+
         # Limits the number of resources returned by Fulfil's API. This is useful when only
         #   a specific number of resources are needed.
         #

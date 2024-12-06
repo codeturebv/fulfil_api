@@ -8,6 +8,7 @@ module FulfilApi
     include Persistable
 
     class ModelNameMissing < Error; end
+    class NotFound < Error; end
 
     def initialize(attributes = {})
       attributes.deep_stringify_keys!
