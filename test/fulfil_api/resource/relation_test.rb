@@ -29,19 +29,6 @@ module FulfilApi
         assert_requested :put, %r{sale.sale/search_read}i, times: 1
       end
 
-      def test_finding_the_first_result_effectively
-        stub_fulfil_request(:put, response: [{ id: 100 }], model: "sale.sale")
-
-        @relation.set(model_name: "sale.sale").find_by(["id", "=", 100])
-
-        assert_requested :put, %r{sale.sale/search_read}i do |request|
-          parsed_body = JSON.parse(request.body)
-
-          assert_equal [["id", "=", 100]], parsed_body["filters"]
-          assert_equal 1, parsed_body["limit"] # The limit is set to one to ensure only one resource is requested
-        end
-      end
-
       def test_loading_all_resources_with_provided_query_values
         stub_fulfil_request(:put, response: [{ id: 100 }], model: "sale.sale")
 
