@@ -9,12 +9,6 @@ module FulfilApi
       module Naming
         extend ActiveSupport::Concern
 
-        included do
-          # Custom error class for missing model name. The model name is required to be
-          #   able to build the API endpoint to perform the search/read HTTP request.
-          class ModelNameMissing < Error; end # rubocop:disable Lint/ConstantDefinitionInBlock
-        end
-
         # Sets the name of the resource model to be queried.
         #
         # @todo In the future, derive the {#name} from the @resource_klass automatically.

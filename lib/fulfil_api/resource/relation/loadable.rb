@@ -17,12 +17,9 @@ module FulfilApi
         # Requires that {#model_name} is set; raises an exception if it's not.
         #
         # @return [true, false] True if the resources were loaded successfully.
-        def load # rubocop:disable Metrics/MethodLength
+        def load
           return true if loaded?
-
-          if model_name.nil?
-            raise FulfilApi::Resource::Relation::ModelNameMissing, "The model name is missing. Use #set to define it."
-          end
+          raise ModelNameMissing if model_name.nil?
 
           response = FulfilApi.client.put(
             "/model/#{model_name}/search_read",

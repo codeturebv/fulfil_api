@@ -73,7 +73,7 @@ module FulfilApi
       end
 
       def test_loading_resources_without_defined_name
-        assert_raises FulfilApi::Resource::Relation::ModelNameMissing do
+        assert_raises FulfilApi::Resource::ModelNameMissing do
           @relation.load
         end
       end
