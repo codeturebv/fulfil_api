@@ -18,7 +18,10 @@ module FulfilApi
         def count
           raise ModelNameMissing if model_name.nil?
 
-          @count ||= FulfilApi.client.put("/model/#{model_name}/search_count", body: { filters: conditions }.compact_blank)
+          @count ||= FulfilApi.client.put(
+            "/model/#{model_name}/search_count",
+            body: { filters: conditions }.compact_blank
+          )
         end
 
         # Checks if the relation has already been counted.
