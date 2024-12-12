@@ -36,13 +36,26 @@ module FulfilApi
         # Limits the number of resources returned by Fulfil's API. This is useful when only
         #   a specific number of resources are needed.
         #
-        # @note If not specified, Fulfil's API defaults to returning up to 500 resources per call.
+        # @note If not specified, Fulfil will assume a request limit of 500.
         #
         # @param value [Integer] The maximum number of resources to return.
         # @return [FulfilApi::Resource::Relation] A new {Relation} instance with the limit applied.
         def limit(value)
           clone.tap do |relation|
             relation.request_limit = value
+          end
+        end
+
+        # Applies an offset to the API resources returned by Fulfil's API.
+        #   This is useful when paginating over larger lists of API resources.
+        #
+        # @note If not specified, Fulfil will assume a request offset of 0.
+        #
+        # @param value [Integer] The page offset for the API request.
+        # @return [FulfilApi::Resource::Relation] A new {Relation} instance with the offset applied.
+        def offset(value)
+          clone.tap do |relation|
+            relation.request_offset = value
           end
         end
 

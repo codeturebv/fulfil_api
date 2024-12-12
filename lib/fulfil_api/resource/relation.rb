@@ -18,7 +18,7 @@ module FulfilApi
       include Naming
       include QueryMethods
 
-      attr_accessor :conditions, :fields, :model_name, :request_limit
+      attr_accessor :conditions, :fields, :model_name, :request_limit, :request_offset
 
       delegate_missing_to :all
 
