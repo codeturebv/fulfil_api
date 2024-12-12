@@ -7,15 +7,21 @@ module FulfilApi
     include AttributeAssignable
     include Persistable
 
-    class ModelNameMissing < Error; end
+    # The model name is required to be able to build the API endpoint to
+    #   perform the search/read/count HTTP requests.
+    class ModelNameMissing < Error
+      def initialize
+        super("The model name is missing. Use #set to define it.")
+      end
+    end
+
     class NotFound < Error; end
 
     def initialize(attributes = {})
       attributes.deep_stringify_keys!
 
       @attributes = {}.with_indifferent_access
-      @model_name = attributes.delete("model_name").presence ||
-                    raise(ModelNameMissing, "The model name is missing. Use the :model_name attribute to define it.")
+      @model_name = attributes.delete("model_name").presence || raise(ModelNameMissing)
 
       assign_attributes(attributes)
     end

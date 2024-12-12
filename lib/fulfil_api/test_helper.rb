@@ -59,6 +59,8 @@ module FulfilApi
     #   stubbed_request_for(:get, model: "product.product", id: "123")
     def stubbed_request_for(method, **options)
       case options.transform_keys(&:to_sym)
+      in { model:, suffix: }
+        stub_request(method.to_sym, %r{fulfil.io/api/v\d+/(?:model/)?#{model}/#{suffix}}i)
       in { model:, id: }
         stub_request(method.to_sym, %r{fulfil.io/api/v\d+/(?:model/)?#{model}/#{id}(.*)}i)
       in { model: }
