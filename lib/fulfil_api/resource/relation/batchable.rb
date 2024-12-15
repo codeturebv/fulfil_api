@@ -6,6 +6,27 @@ module FulfilApi
       # The {FulfilApi::Resource::Relation::Batchable} module includes a set of
       #   helper/query methods that queries resources in Fulfil in batches.
       module Batchable
+        # The {#find_each} is a shorthand for iterating over individual API resources
+        #   in a memory effective way.
+        #
+        # Under the hood, it uses the {#in_batches} to find API resources in batches
+        #   and process them efficiently.
+        #
+        # @example find all resources
+        #
+        #   FulfilApi::Resource.set(model_name: "sale.sale").find_each do |sales_order|
+        #     process_sales_order(sales_order)
+        #   end
+        #
+        # @param batch_size [Integer] The default batch forwarded to the {#in_batches} method.
+        # @yield [FulfilApi::Resource] An individual API resource.
+        # @return [FulfilApi::Resource::Relation]
+        def find_each(batch_size: 500, &block)
+          in_batches(of: batch_size) do |batch|
+            batch.each(&block)
+          end
+        end
+
         # Finds API resources in batches. Defaults to the maximum number of resources
         #   Fulfil's API endpoints will return (500 resources).
         #

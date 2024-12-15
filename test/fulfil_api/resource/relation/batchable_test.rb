@@ -10,6 +10,38 @@ module FulfilApi
           @relation = FulfilApi::Resource.set(model_name: "sale.sale")
         end
 
+        def test_finding_individual_resources_effectively
+          batch_one = [{ id: 1 }, { id: 2 }]
+
+          stub_request(:put, /fulfil\.io/)
+            .and_return(status: 200, body: batch_one.to_json, headers: { "Content-Type": "application/json" })
+
+          @relation.find_each do |resource|
+            assert_includes batch_one.map { _1[:id] }, resource["id"]
+          end
+        end
+
+        def test_finding_individual_resources_effectively_in_smaller_batches
+          batch_one = [{ id: 1 }, { id: 2 }]
+          batch_two = [{ id: 3 }, { id: 4 }]
+          batch_three = [{ id: 5 }]
+
+          stub_request(:put, /fulfil\.io/)
+            .and_return(
+              { status: 200, body: batch_one.to_json, headers: { "Content-Type": "application/json" } },
+              { status: 200, body: batch_two.to_json, headers: { "Content-Type": "application/json" } },
+              { status: 200, body: batch_three.to_json, headers: { "Content-Type": "application/json" } }
+            )
+
+          @relation.find_each(batch_size: 2) do |resource|
+            assert_includes [1, 2, 3, 4, 5], resource["id"]
+          end
+
+          # NOTE: We have three batches. The last one includes less items than the
+          #   requested batch size and therefore we will stop querying Fulfil's API.
+          assert_requested :put, /fulfil\.io/, times: 3
+        end
+
         def test_finding_multiple_batches
           batch_one = [{ id: 1 }, { id: 2 }, { id: 3 }]
 
