@@ -11,21 +11,28 @@ module FulfilApi
       #   or indirectly requested by the user of the gem. This way, we ensure that
       #   we only request data when we need to.
       module Loadable
-        # Loads resources from Fulfil's API based on the current filters, fields, and limits
-        #   if they haven't been loaded yet.
+        # Loads resources from Fulfil's API based on the current filters, fields,
+        #   offset, and limits if they haven't been loaded yet.
         #
         # Requires that {#model_name} is set; raises an exception if it's not.
         #
         # @return [true, false] True if the resources were loaded successfully.
-        def load
+        def load # rubocop:disable Metrics/MethodLength
           return true if loaded?
           raise ModelNameMissing if model_name.nil?
 
           response = FulfilApi.client.put(
             "/model/#{model_name}/search_read",
-            body: { filters: conditions, fields: fields, limit: request_limit }.compact_blank
+            body: {
+              filters: conditions,
+              fields: fields,
+              limit: request_limit,
+              offset: request_offset
+            }.compact_blank
           )
 
+          # NOTE: The /search_read endpoint will always be an array. Therefore, we're
+          #   always looping over the response values.
           @resources = response.map do |attributes|
             @resource_klass.new(attributes.merge(model_name: model_name))
           end
