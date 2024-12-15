@@ -16,10 +16,6 @@ module FulfilApi
           end
         end
 
-        def test_default_loaded_check
-          refute_predicate @relation, :loaded?
-        end
-
         def test_loading_all_resources_with_provided_query_values
           stub_fulfil_request(:put, response: [{ id: 100 }], model: "sale.sale")
 
@@ -49,6 +45,10 @@ module FulfilApi
           sales_orders.load # This won't trigger an additional HTTP request either as it's already loaded
 
           assert_requested :put, %r{sale.sale/search_read}i, times: 1
+        end
+
+        def test_default_loaded_check
+          refute_predicate @relation, :loaded?
         end
 
         def test_loading_resources_marks_relation_as_loaded
