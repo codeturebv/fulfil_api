@@ -83,7 +83,8 @@ module FulfilApi
           stub_request(:put, /fulfil\.io/)
             .and_return(
               { status: 200, body: batch_one.to_json, headers: { "Content-Type": "application/json" } },
-              { status: 429, body: { error: "Too Many Requests" }.to_json, headers: { "Content-Type": "application/json" } },
+              { status: 429, body: { error: "Too Many Requests" }.to_json,
+                headers: { "Content-Type": "application/json" } },
               { status: 200, body: batch_two.to_json, headers: { "Content-Type": "application/json" } }
             )
 
