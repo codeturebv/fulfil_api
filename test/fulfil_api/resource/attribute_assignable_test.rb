@@ -26,7 +26,7 @@ module FulfilApi
         assert_equal raw_value, @resource.attributes["warehouse_name"]
       end
 
-      def test_assignign_an_nested_attribute
+      def test_assigning_an_nested_attribute
         @resource.assign_attribute("warehouse.id", 10)
 
         assert_equal 10, @resource.attributes["warehouse"]["id"]
