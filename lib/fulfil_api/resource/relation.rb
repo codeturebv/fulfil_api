@@ -14,6 +14,7 @@ module FulfilApi
       #   standard Ruby module extensions. This ensures our modules win when there
       #   is any conflicting method. An example of this is the {#count} method.
       include Countable
+      include Batchable
       include Loadable
       include Naming
       include QueryMethods
@@ -58,7 +59,8 @@ module FulfilApi
       def reset
         @conditions = []
         @fields = %w[id]
-        @limit = nil
+        @request_limit = nil
+        @request_offset = nil
 
         self
       end
