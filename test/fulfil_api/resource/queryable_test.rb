@@ -10,7 +10,7 @@ module FulfilApi
         second_request = first_request.where(["id", "=", 200])
 
         refute_same first_request, second_request
-        assert_kind_of FulfilApi::Resource::Relation, first_request
+        assert_kind_of FulfilApi::Relation, first_request
       end
 
       def test_chainability_of_request_options
