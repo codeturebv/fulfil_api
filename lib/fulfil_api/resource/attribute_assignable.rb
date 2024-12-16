@@ -22,11 +22,31 @@ module FulfilApi
       # @param name [String, Symbol] The attribute name
       # @param value [Any] The attribute value
       # @return [Hash] The resource attributes
-      def assign_attribute(name, value)
+      def assign_attribute(name, value) # rubocop:disable Metrics/MethodLength
         attribute = build_attribute(name, value)
         attribute.deep_stringify_keys!
 
-        @attributes = @attributes.deep_merge(attribute)
+        # NOTE: Fulfil will assign the ID of a nested resource to its own namespace.
+        #   This leads to conflicts when we're trying to parse the returned fields
+        #   from the API.
+        #
+        # To address this problem, we're manually handling these cases. We're dealing
+        #   with a nested relation when one of the values is an integer and the other
+        #   is an hash.
+        #
+        # @example a nested relation
+        #
+        #   $ resource.assign_attributes({ "warehouse.name" => "Toronto", "warehouse" => 10 })
+        #   => <FulfilApi::Resource @attributes={"warehouse" => { "id" => 10, "name" => "Toronto" }} />
+        @attributes = @attributes.deep_merge(attribute) do |_key, current_value, other_value|
+          if current_value.is_a?(Integer) && other_value.is_a?(Hash)
+            { "id" => current_value }.deep_merge(other_value)
+          elsif current_value.is_a?(Hash) && other_value.is_a?(Integer)
+            current_value.deep_merge({ "id" => other_value })
+          else
+            other_value
+          end
+        end
       end
 
       private
