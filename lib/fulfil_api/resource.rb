@@ -5,7 +5,9 @@ module FulfilApi
   #   endpoints of Fulfil.
   class Resource
     include AttributeAssignable
+    include Comparable
     include Persistable
+    include Serializable
 
     # The model name is required to be able to build the API endpoint to
     #   perform the search/read/count HTTP requests.
