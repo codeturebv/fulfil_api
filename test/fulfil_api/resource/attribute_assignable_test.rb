@@ -26,7 +26,7 @@ module FulfilApi
         assert_equal raw_value, @resource.attributes["warehouse_name"]
       end
 
-      def test_assignign_an_nested_attribute
+      def test_assigning_a_nested_attribute
         @resource.assign_attribute("warehouse.id", 10)
 
         assert_equal 10, @resource.attributes["warehouse"]["id"]
@@ -80,6 +80,27 @@ module FulfilApi
         @resource.assign_attribute("existing_attribute", { warehouse: { id: 15 } })
 
         assert_equal({ "warehouse" => { "id" => 15 } }, @resource.attributes["existing_attribute"])
+      end
+
+      def test_assigning_a_nested_relation
+        raw_values = { "warehouse" => 10, "warehouse.name" => "Toronto" }
+        @resource.assign_attributes(raw_values)
+
+        assert_equal({ "warehouse" => { "id" => 10, "name" => "Toronto" } }, @resource.attributes)
+      end
+
+      def test_assigning_a_nested_relation_in_reverse_order
+        raw_values = { "warehouse.name" => "Toronto", "warehouse" => 10 }
+        @resource.assign_attributes(raw_values)
+
+        assert_equal({ "warehouse" => { "name" => "Toronto", "id" => 10 } }, @resource.attributes)
+      end
+
+      def test_assigning_a_nested_relation_in_mixed_order
+        raw_values = { "warehouse.name" => "Toronto", "warehouse" => 10, "warehouse.active" => true }
+        @resource.assign_attributes(raw_values)
+
+        assert_equal({ "warehouse" => { "name" => "Toronto", "id" => 10, "active" => true } }, @resource.attributes)
       end
     end
   end
