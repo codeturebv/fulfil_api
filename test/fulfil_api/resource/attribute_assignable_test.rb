@@ -89,11 +89,25 @@ module FulfilApi
         assert_equal({ "warehouse" => { "id" => 10, "name" => "Toronto" } }, @resource.attributes)
       end
 
+      def test_assigning_a_nested_relation_with_a_string_as_id
+        raw_values = { "shipment" => "stock.shipment.out,10", "shipment.number" => "CS1234" }
+        @resource.assign_attributes(raw_values)
+
+        assert_equal({ "shipment" => { "id" => 10, "number" => "CS1234" } }, @resource.attributes)
+      end
+
       def test_assigning_a_nested_relation_in_reverse_order
         raw_values = { "warehouse.name" => "Toronto", "warehouse" => 10 }
         @resource.assign_attributes(raw_values)
 
         assert_equal({ "warehouse" => { "name" => "Toronto", "id" => 10 } }, @resource.attributes)
+      end
+
+      def test_assigning_a_nested_relation_with_a_string_as_id_in_reverse_order
+        raw_values = { "shipment.number" => "CS1234", "shipment" => "stock.shipment.out,10" }
+        @resource.assign_attributes(raw_values)
+
+        assert_equal({ "shipment" => { "id" => 10, "number" => "CS1234" } }, @resource.attributes)
       end
 
       def test_assigning_a_nested_relation_in_mixed_order
@@ -102,6 +116,21 @@ module FulfilApi
 
         assert_equal({ "warehouse" => { "name" => "Toronto", "id" => 10, "active" => true } }, @resource.attributes)
       end
+
+      def test_assigning_a_nested_relation_with_a_string_as_id_in_mixed_order
+        raw_values = {
+          "shipment.number" => "CS1234",
+          "shipment" => "stock.shipment.out,10",
+          "shipment.origin" => "sale.sale,1"
+        }
+        @resource.assign_attributes(raw_values)
+
+        assert_equal(
+          { "shipment" => { "id" => 10, "number" => "CS1234", "origin" => "sale.sale,1" } },
+          @resource.attributes
+        )
+      end
+
     end
   end
 end
