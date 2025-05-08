@@ -38,11 +38,25 @@ module FulfilApi
         #
         #   $ resource.assign_attributes({ "warehouse.name" => "Toronto", "warehouse" => 10 })
         #   => <FulfilApi::Resource @attributes={"warehouse" => { "id" => 10, "name" => "Toronto" }} />
+        #
+        # @example a nested relation with a string as ID
+        #
+        #   $ resource.assign_attributes({ "shipment" => "stock.shipment.out,12", "shipment.number": "CS1234" })
+        #   => <FulfilApi::Resource @attributes={"warehouse" => { "id" => 12, "number" => "CS1234" }} />
         @attributes = @attributes.deep_merge(attribute) do |_key, current_value, other_value|
-          if current_value.is_a?(Integer) && other_value.is_a?(Hash)
-            { "id" => current_value }.deep_merge(other_value)
-          elsif current_value.is_a?(Hash) && other_value.is_a?(Integer)
-            current_value.deep_merge({ "id" => other_value })
+          extract_id = lambda { |possible_id|
+            possible_id =~ /\A[\w-]+(?:\.[\w-]+){1,2},(?<id>\d+)\z/ ? Regexp.last_match[:id].to_i : nil
+          }
+
+          case [current_value, other_value]
+          in [String => str, Hash] if (id = extract_id.call(str))
+            { "id" => id }.merge(other_value)
+          in [Integer, Hash]
+            { "id" => current_value }.merge(other_value)
+          in [Hash, Integer]
+            current_value.merge({ "id" => other_value })
+          in [Hash, String => str] if (id = extract_id.call(str))
+            current_value.merge({ "id" => id })
           else
             other_value
           end
