@@ -130,7 +130,6 @@ module FulfilApi
           @resource.attributes
         )
       end
-
     end
   end
 end
