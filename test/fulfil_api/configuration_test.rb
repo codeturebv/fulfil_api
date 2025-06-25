@@ -69,8 +69,35 @@ module FulfilApi
         assert_equal "temporary", FulfilApi.configuration.merchant_id
       end
 
-      # Ensure the original configuration is restored after the block
       assert_equal "v2", FulfilApi.configuration.api_version
+    end
+
+    def test_global_configuration_applies_globally
+      FulfilApi.configure do |config|
+        config.access_token = "GLOBAL_TOKEN"
+      end
+
+      assert_equal "GLOBAL_TOKEN", FulfilApi.configuration.access_token
+
+      token_from_thread = nil
+
+      Thread.new do
+        token_from_thread = FulfilApi.configuration.access_token
+      end.join
+
+      assert_equal "GLOBAL_TOKEN", token_from_thread
+    end
+
+    def test_with_config_temporarily_overrides_configuration
+      FulfilApi.configure do |config|
+        config.access_token = "GLOBAL_TOKEN"
+      end
+
+      FulfilApi.with_config(access_token: "TEMP_TOKEN") do
+        assert_equal "TEMP_TOKEN", FulfilApi.configuration.access_token
+      end
+
+      assert_equal "GLOBAL_TOKEN", FulfilApi.configuration.access_token
     end
   end
 end
