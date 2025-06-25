@@ -45,7 +45,8 @@ module FulfilApi
   #
   # @return [Fulfil::Configuration] The current configuration object.
   def self.configuration
-    Thread.current[:fulfil_api_configuration] ||= Configuration.new
+    Thread.current[:fulfil_api_configuration] ||=
+      @configuration ||= Configuration.new
   end
 
   # Allows the configuration of the gem in a thread-safe manner.

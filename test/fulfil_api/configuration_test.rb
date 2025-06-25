@@ -69,7 +69,6 @@ module FulfilApi
         assert_equal "temporary", FulfilApi.configuration.merchant_id
       end
 
-      # Ensure the original configuration is restored after the block
       assert_equal "v2", FulfilApi.configuration.api_version
     end
   end

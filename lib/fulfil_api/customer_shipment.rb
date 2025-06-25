@@ -19,7 +19,7 @@ module FulfilApi
       #
       # @example Hold multipe customer shipments
       #   FulfilApi::CustomerShipment.hold([123, 456], note: "Double booking")
-      def hold!(id_or_ids, note:)
+      def hold!(id_or_ids, note:) # rubocop:disable Naming/PredicateMethod
         FulfilApi.client.put("/model/#{MODEL_NAME}/hold", body: [[*id_or_ids].flatten, note])
         true
       end
@@ -37,7 +37,7 @@ module FulfilApi
       #
       # @example Unhold a customer shipment
       #   FulfilApi::CustomerShipment.unhold([123, 456], note: "All clear")
-      def unhold!(id_or_ids, note:)
+      def unhold!(id_or_ids, note:) # rubocop:disable Naming/PredicateMethod
         FulfilApi.client.put("/model/#{MODEL_NAME}/unhold", body: [[*id_or_ids].flatten, note])
         true
       end
