@@ -58,7 +58,9 @@ module FulfilApi
 
           current_offset += 1
         rescue FulfilApi::Error => e
-          retry if e.details[:response_status] == 429
+          raise e unless e.details[:response_status] == 429
+
+          retry
         end
 
         self

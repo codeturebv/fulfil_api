@@ -125,6 +125,21 @@ module FulfilApi
 
         assert_requested :put, /fulfil\.io/, times: 3
       end
+
+      def test_encountering_a_regular_http_error
+        stub_request(:put, /fulfil\.io/)
+          .and_return(
+            status: 400,
+            body: { error: "something went wrong" }.to_json,
+            headers: { "Content-Type": "application/json" }
+          )
+
+        assert_raises FulfilApi::Error do
+          @relation.in_batches(of: 2) do |batch|
+            batch
+          end
+        end
+      end
     end
   end
 end
