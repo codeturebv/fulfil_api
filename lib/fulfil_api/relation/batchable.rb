@@ -70,6 +70,7 @@ module FulfilApi
             end
 
             current_retry += 1
+            sleep 0.25
             retry
           end
 
