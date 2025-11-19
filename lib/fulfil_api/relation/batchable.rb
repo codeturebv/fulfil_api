@@ -45,11 +45,11 @@ module FulfilApi
       #   (TooManyRequests) HTTP error to ensure the lookup can be completed.
       #
       # @param of [Integer] The maximum number of resources in a batch.
-      # @param retries [Integer] The maximum number of retries before raising.
+      # @param retries [Symbol, Integer] The maximum number of retries before raising.
       # @yield [FulfilApi::Relation] Yields FulfilApi::Relation
       #   objects to work with a batch of records.
       # @return [FulfilApi::Relation]
-      def in_batches(of: 500, retries: 5) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+      def in_batches(of: 500, retries: :unlimited) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
         current_retry = 0
         current_offset = request_offset.presence || 0
         batch_size = of
@@ -65,7 +65,7 @@ module FulfilApi
           current_offset += 1
         rescue FulfilApi::Error => e
           if e.details[:response_status] == 429
-            if current_retry > retries
+            if retries != :unlimited && current_retry > retries
               raise RetryLimitExceeded, "the maximum number of #{retries} retries has been reached."
             end
 
