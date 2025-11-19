@@ -153,10 +153,39 @@ module FulfilApi
           )
 
         assert_raises FulfilApi::Relation::Batchable::RetryLimitExceeded do
-          @relation.in_batches(retries: 5) do |batch|
+          @relation.in_batches(retries: 2) do |batch|
             assert_kind_of FulfilApi::Relation, batch
           end
         end
+
+        assert_requested :put, /fulfil\.io/, times: 4
+      end
+
+      def test_encountering_a_too_many_request_errors_and_successfull_requests
+        batch_one = [{ id: 1 }]
+
+        stub_request(:put, /fulfil\.io/)
+          .and_return(
+            { status: 429, body: { error: "Too Many Requests" }.to_json,
+              headers: { "Content-Type": "application/json" } },
+            { status: 429, body: { error: "Too Many Requests" }.to_json,
+              headers: { "Content-Type": "application/json" } },
+            { status: 200, body: batch_one.to_json, headers: { "Content-Type": "application/json" } },
+            { status: 429, body: { error: "Too Many Requests" }.to_json,
+              headers: { "Content-Type": "application/json" } },
+            { status: 429, body: { error: "Too Many Requests" }.to_json,
+              headers: { "Content-Type": "application/json" } },
+            { status: 429, body: { error: "Too Many Requests" }.to_json,
+              headers: { "Content-Type": "application/json" } }
+          )
+
+        assert_raises FulfilApi::Relation::Batchable::RetryLimitExceeded do
+          @relation.in_batches(of: 1, retries: 3) do |batch|
+            assert_kind_of FulfilApi::Relation, batch
+          end
+        end
+
+        assert_requested :put, /fulfil\.io/, times: 8
       end
 
       def test_encountering_a_regular_http_error

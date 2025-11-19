@@ -63,6 +63,7 @@ module FulfilApi
           break unless batch_relation.size == batch_size
 
           current_offset += 1
+          current_retry = 0 # Reset the retries back to the default
         rescue FulfilApi::Error => e
           if e.details[:response_status] == 429
             if retries != :unlimited && current_retry > retries
