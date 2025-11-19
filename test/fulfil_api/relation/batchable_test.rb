@@ -126,6 +126,37 @@ module FulfilApi
         assert_requested :put, /fulfil\.io/, times: 3
       end
 
+      def test_encountering_a_too_many_request_error_too_many_times_with_default_value
+        stub_request(:put, /fulfil\.io/)
+          .and_return(
+            { status: 429, body: { error: "Too Many Requests" }.to_json, headers: { "Content-Type": "application/json" } },
+            { status: 429, body: { error: "Too Many Requests" }.to_json, headers: { "Content-Type": "application/json" } },
+            { status: 429, body: { error: "Too Many Requests" }.to_json, headers: { "Content-Type": "application/json" } },
+            { status: 429, body: { error: "Too Many Requests" }.to_json, headers: { "Content-Type": "application/json" } },
+            { status: 429, body: { error: "Too Many Requests" }.to_json, headers: { "Content-Type": "application/json" } }
+          )
+
+        assert_raises FulfilApi::Relation::Batchable::RetryLimitExceeded do
+          @relation.in_batches do |batch|
+            assert_kind_of FulfilApi::Relation, batch
+          end
+        end
+      end
+
+      def test_encountering_a_too_many_request_error_too_many_times_with_configured_value
+        stub_request(:put, /fulfil\.io/)
+          .and_return(
+            { status: 429, body: { error: "Too Many Requests" }.to_json, headers: { "Content-Type": "application/json" } },
+            { status: 429, body: { error: "Too Many Requests" }.to_json, headers: { "Content-Type": "application/json" } }
+          )
+
+        assert_raises FulfilApi::Relation::Batchable::RetryLimitExceeded do
+          @relation.in_batches(retries: 2) do |batch|
+            assert_kind_of FulfilApi::Relation, batch
+          end
+        end
+      end
+
       def test_encountering_a_regular_http_error
         stub_request(:put, /fulfil\.io/)
           .and_return(
