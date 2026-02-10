@@ -16,36 +16,6 @@ module FulfilApi
       @client = FulfilApi::TplClient.new(@configuration)
     end
 
-    def teardown
-      FulfilApi.configuration = FulfilApi::Configuration.new
-    end
-
-    # -- Configuration Tests --
-
-    def test_raises_error_when_auth_token_is_missing
-      configuration = FulfilApi::Configuration.new(merchant_id: @merchant_id, tpl: {})
-
-      assert_raises FulfilApi::TplClient::ConfigurationError do
-        FulfilApi::TplClient.new(configuration)
-      end
-    end
-
-    def test_raises_error_when_tpl_config_is_nil
-      configuration = FulfilApi::Configuration.new(merchant_id: @merchant_id)
-
-      assert_raises FulfilApi::TplClient::ConfigurationError do
-        FulfilApi::TplClient.new(configuration)
-      end
-    end
-
-    def test_raises_error_when_merchant_id_is_missing
-      configuration = FulfilApi::Configuration.new(tpl: { auth_token: @auth_token })
-
-      assert_raises FulfilApi::TplClient::ConfigurationError do
-        FulfilApi::TplClient.new(configuration)
-      end
-    end
-
     def test_uses_tpl_specific_merchant_id_when_provided
       tpl_merchant_id = "tpl-merchant-#{SecureRandom.uuid}"
 
@@ -62,7 +32,13 @@ module FulfilApi
       assert_requested :get, "https://#{tpl_merchant_id}.fulfil.io/services/3pl/v1/shipments"
     end
 
-    # -- API Version Tests --
+    def test_falls_back_to_global_merchant_id
+      stub_tpl_request(:get, merchant_id: @merchant_id)
+
+      @client.get("shipments")
+
+      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/shipments"
+    end
 
     def test_defaults_to_v1_api_version
       stub_tpl_request(:get, merchant_id: @merchant_id)
@@ -88,16 +64,6 @@ module FulfilApi
       assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v2/shipments"
     end
 
-    def test_falls_back_to_global_merchant_id
-      stub_tpl_request(:get, merchant_id: @merchant_id)
-
-      @client.get("shipments")
-
-      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/shipments"
-    end
-
-    # -- Request Path Tests --
-
     def test_builds_correct_request_path
       stub_tpl_request(:get, merchant_id: @merchant_id)
 
@@ -114,8 +80,6 @@ module FulfilApi
       assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/shipments"
     end
 
-    # -- Authentication Tests --
-
     def test_includes_bearer_token_in_requests
       stub_tpl_request(:get, merchant_id: @merchant_id)
 
@@ -125,8 +89,6 @@ module FulfilApi
         assert_equal "Bearer #{@auth_token}", request.headers["Authorization"]
       end
     end
-
-    # -- HTTP Method Tests --
 
     def test_get_request
       stub_tpl_request(:get, merchant_id: @merchant_id, response: [{ "id" => 1 }])
@@ -190,8 +152,6 @@ module FulfilApi
       assert_requested :delete, %r{services/3pl/v1/shipments/1}i
     end
 
-    # -- Error Handling Tests --
-
     def test_reraising_of_http_errors
       stub_tpl_request(:get, merchant_id: @merchant_id, status: 422, response: { error: "something went wrong" })
 
@@ -202,19 +162,6 @@ module FulfilApi
 
       assert_equal 422, error.details[:response_status]
       assert_equal({ error: "something went wrong" }.to_json, error.details[:response_body])
-    end
-
-    # -- Integration via FulfilApi.tpl_client --
-
-    def test_tpl_client_accessor
-      FulfilApi.configure do |config|
-        config.merchant_id = @merchant_id
-        config.tpl = { auth_token: @auth_token }
-      end
-
-      client = FulfilApi.tpl_client
-
-      assert_instance_of FulfilApi::TplClient, client
     end
 
     private

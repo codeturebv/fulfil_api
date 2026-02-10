@@ -81,5 +81,38 @@ module FulfilApi
 
       assert_equal({ auth_token: "my-3pl-token", merchant_id: "tpl-merchant" }, FulfilApi.configuration.tpl)
     end
+
+    def test_tpl_client_raises_error_when_auth_token_is_missing
+      configuration = FulfilApi::Configuration.new(merchant_id: "codeture", tpl: {})
+
+      assert_raises FulfilApi::TplClient::ConfigurationError do
+        FulfilApi::TplClient.new(configuration)
+      end
+    end
+
+    def test_tpl_client_raises_error_when_tpl_config_is_nil
+      configuration = FulfilApi::Configuration.new(merchant_id: "codeture")
+
+      assert_raises FulfilApi::TplClient::ConfigurationError do
+        FulfilApi::TplClient.new(configuration)
+      end
+    end
+
+    def test_tpl_client_raises_error_when_merchant_id_is_missing
+      configuration = FulfilApi::Configuration.new(tpl: { auth_token: "my-3pl-token" })
+
+      assert_raises FulfilApi::TplClient::ConfigurationError do
+        FulfilApi::TplClient.new(configuration)
+      end
+    end
+
+    def test_tpl_client_accessor
+      FulfilApi.configure do |config|
+        config.merchant_id = "codeture"
+        config.tpl = { auth_token: "my-3pl-token" }
+      end
+
+      assert_instance_of FulfilApi::TplClient, FulfilApi.tpl_client
+    end
   end
 end
