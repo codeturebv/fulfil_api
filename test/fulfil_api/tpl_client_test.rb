@@ -26,26 +26,26 @@ module FulfilApi
 
       client = FulfilApi::TplClient.new(configuration)
 
-      stub_fulfil_tpl_request(:get, path: "shipments")
-      client.get("shipments")
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers")
+      client.get("inbound-transfers")
 
-      assert_requested :get, "https://#{tpl_merchant_id}.fulfil.io/services/3pl/v1/shipments"
+      assert_requested :get, "https://#{tpl_merchant_id}.fulfil.io/services/3pl/v1/inbound-transfers"
     end
 
     def test_falls_back_to_global_merchant_id
-      stub_fulfil_tpl_request(:get, path: "shipments")
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers")
 
-      @client.get("shipments")
+      @client.get("inbound-transfers")
 
-      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/shipments"
+      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/inbound-transfers"
     end
 
     def test_defaults_to_v1_api_version
-      stub_fulfil_tpl_request(:get, path: "shipments")
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers")
 
-      @client.get("shipments")
+      @client.get("inbound-transfers")
 
-      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/shipments"
+      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/inbound-transfers"
     end
 
     def test_uses_custom_api_version_when_provided
@@ -56,98 +56,98 @@ module FulfilApi
 
       client = FulfilApi::TplClient.new(configuration)
 
-      stub_fulfil_tpl_request(:get, path: "shipments")
-      client.get("shipments")
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers")
+      client.get("inbound-transfers")
 
-      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v2/shipments"
+      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v2/inbound-transfers"
     end
 
     def test_builds_correct_request_path
-      stub_fulfil_tpl_request(:get, path: "shipments")
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers/receive.json")
 
-      @client.get("shipments")
+      @client.get("inbound-transfers/receive.json")
 
-      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/shipments"
+      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/inbound-transfers/receive.json"
     end
 
     def test_squeezes_duplicate_slashes_in_path
-      stub_fulfil_tpl_request(:get, path: "shipments")
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers")
 
-      @client.get("/shipments")
+      @client.get("/inbound-transfers")
 
-      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/shipments"
+      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/inbound-transfers"
     end
 
     def test_includes_bearer_token_in_requests
-      stub_fulfil_tpl_request(:get, path: "shipments")
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers")
 
-      @client.get("shipments")
+      @client.get("inbound-transfers")
 
-      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/shipments" do |request|
+      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/inbound-transfers" do |request|
         assert_equal "Bearer #{@auth_token}", request.headers["Authorization"]
       end
     end
 
     def test_get_request
-      stub_fulfil_tpl_request(:get, path: "shipments", response: [{ "id" => 1 }])
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers", response: [{ "id" => 1 }])
 
-      result = @client.get("shipments")
+      result = @client.get("inbound-transfers")
 
       assert_equal [{ "id" => 1 }], result
     end
 
     def test_get_request_with_query_params
-      stub_fulfil_tpl_request(:get, path: "shipments")
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers")
 
-      @client.get("shipments", page: 1, per_page: 25)
+      @client.get("inbound-transfers", page: 1, per_page: 25)
 
-      assert_requested :get, %r{services/3pl/v1/shipments\?page=1&per_page=25}i
+      assert_requested :get, %r{services/3pl/v1/inbound-transfers\?page=1&per_page=25}i
     end
 
     def test_get_request_filters_blank_query_params
-      stub_fulfil_tpl_request(:get, path: "shipments")
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers")
 
-      @client.get("shipments", page: 1, status: nil, name: "")
+      @client.get("inbound-transfers", page: 1, status: nil, name: "")
 
-      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/shipments?page=1"
+      assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v1/inbound-transfers?page=1"
     end
 
     def test_post_request
-      stub_fulfil_tpl_request(:post, path: "shipments")
+      stub_fulfil_tpl_request(:post, path: "inbound-transfers/receive.json")
 
-      @client.post("shipments", { tracking_number: "ABC123" })
+      @client.post("inbound-transfers/receive.json", { tracking_number: "ABC123" })
 
-      assert_requested :post, %r{services/3pl/v1/shipments}i do |request|
+      assert_requested :post, %r{services/3pl/v1/inbound-transfers/receive\.json}i do |request|
         assert_equal({ "tracking_number" => "ABC123" }, JSON.parse(request.body))
       end
     end
 
     def test_put_request
-      stub_fulfil_tpl_request(:put, path: "shipments", id: "1")
+      stub_fulfil_tpl_request(:put, path: "inbound-transfers/receive.json")
 
-      @client.put("shipments/1", { status: "shipped" })
+      @client.put("inbound-transfers/receive.json", { status: "shipped" })
 
-      assert_requested :put, %r{services/3pl/v1/shipments/1}i do |request|
+      assert_requested :put, %r{services/3pl/v1/inbound-transfers/receive\.json}i do |request|
         assert_equal({ "status" => "shipped" }, JSON.parse(request.body))
       end
     end
 
     def test_patch_request
-      stub_fulfil_tpl_request(:patch, path: "shipments", id: "1")
+      stub_fulfil_tpl_request(:patch, path: "inbound-transfers/receive.json")
 
-      @client.patch("shipments/1", { status: "delivered" })
+      @client.patch("inbound-transfers/receive.json", { status: "delivered" })
 
-      assert_requested :patch, %r{services/3pl/v1/shipments/1}i do |request|
+      assert_requested :patch, %r{services/3pl/v1/inbound-transfers/receive\.json}i do |request|
         assert_equal({ "status" => "delivered" }, JSON.parse(request.body))
       end
     end
 
     def test_reraising_of_http_errors
-      stub_fulfil_tpl_request(:get, path: "shipments", status: 422, response: { error: "something went wrong" })
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers", status: 422, response: { error: "something went wrong" })
 
       error =
         assert_raises FulfilApi::Error do
-          @client.get("shipments")
+          @client.get("inbound-transfers")
         end
 
       assert_equal 422, error.details[:response_status]

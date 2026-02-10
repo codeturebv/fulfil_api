@@ -47,16 +47,16 @@ module FulfilApi
     # @param [Hash] response The response body to return as a JSON object (default is {}).
     # @param [Integer] status The HTTP status code to return (default is 200).
     # @param [Hash] options Additional options for the request URL.
-    # @option options [String] :path The relative path to the 3PL endpoint (e.g., 'shipments').
-    # @option options [String] :id The ID of the resource (optional, appended to path).
+    # @option options [String] :path The relative path to the 3PL endpoint
+    #   (e.g., 'inbound-transfers/receive.json').
     #
     # @return [WebMock::RequestStub] The WebMock request stub object.
     #
-    # @example Stub a GET request for the shipments endpoint
-    #   stub_fulfil_tpl_request(:get, path: "shipments", response: [{ id: 1 }])
+    # @example Stub a GET request for the inbound transfers endpoint
+    #   stub_fulfil_tpl_request(:get, path: "inbound-transfers", response: [{ id: 1 }])
     #
-    # @example Stub a POST request for a specific shipment
-    #   stub_fulfil_tpl_request(:post, path: "shipments", id: "123", response: { id: 123 })
+    # @example Stub a POST request for receiving an inbound transfer
+    #   stub_fulfil_tpl_request(:post, path: "inbound-transfers/receive.json", response: { id: 123 })
     #
     # @example Stub all 3PL requests for a given method
     #   stub_fulfil_tpl_request(:get)
@@ -71,14 +71,12 @@ module FulfilApi
     #
     # @param [String, Symbol] method The HTTP method to be stubbed (e.g., :get, :post).
     # @param [Hash] options Additional options for the request URL.
-    # @option options [String] :path The relative path to the 3PL endpoint (e.g., 'shipments').
-    # @option options [String] :id The ID of the resource (optional, appended to path).
+    # @option options [String] :path The relative path to the 3PL endpoint
+    #   (e.g., 'inbound-transfers/receive.json').
     #
     # @return [WebMock::RequestStub] The WebMock request stub object.
     def stubbed_tpl_request_for(method, **options)
       case options.transform_keys(&:to_sym)
-      in { path:, id: }
-        stub_request(method.to_sym, %r{fulfil.io/services/3pl/v\d+/#{path}/#{id}(.*)}i)
       in { path: }
         stub_request(method.to_sym, %r{fulfil.io/services/3pl/v\d+/#{path}(.*)}i)
       else
