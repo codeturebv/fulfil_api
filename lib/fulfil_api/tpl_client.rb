@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "faraday"
+require "faraday/net_http_persistent"
 
 module FulfilApi
   # The {FulfilApi::TplClient} allows making proxy requests to Fulfil's 3PL
@@ -8,8 +9,8 @@ module FulfilApi
   # the 3PL supplier API using standard HTTP methods.
   #
   # @example Using the TPL client
-  #   FulfilApi.tpl_client.get("shipments", page: 1)
-  #   FulfilApi.tpl_client.post("shipments", { tracking_number: "123" })
+  #   FulfilApi.tpl_client.get("inbound-transfers", url_parameters: { page: 1 })
+  #   FulfilApi.tpl_client.post("inbound-transfers/receive.json", body: { tracking_number: "123" })
   class TplClient
     class ConfigurationError < FulfilApi::Error; end
 
@@ -29,42 +30,42 @@ module FulfilApi
       @api_version = tpl_config[:api_version].presence || DEFAULT_API_VERSION
     end
 
-    # Sends a GET request to the 3PL supplier API endpoint.
+    # Performs an HTTP GET request to a 3PL API endpoint.
     #
-    # @param path [String] The relative path to the endpoint.
-    # @param query_params [Hash] The query parameters for the endpoint.
-    # @return [Array, Hash] The JSON parsed response from the API endpoint.
-    def get(path, query_params = {})
-      connection.get(build_request_path(path), query_params.reject { |_key, value| value.blank? }).body
-    rescue Faraday::Error => e
-      handle_request_error(e)
+    # @param relative_path [String] The relative path to the endpoint.
+    # @param url_parameters [Hash, nil] The optional URL parameters for the API endpoint.
+    # @return [Array, Hash, String] The parsed response body.
+    def get(relative_path, url_parameters: nil)
+      request(:get, relative_path, url_parameters)
     end
 
-    # Sends a PATCH request to the 3PL supplier API endpoint.
+    # Performs an HTTP PATCH request to a 3PL API endpoint.
     #
-    # @param path [String] The relative path to the endpoint.
-    # @param request_body [Hash] The request body for the endpoint.
-    # @return [Array, Hash] The JSON parsed response from the API endpoint.
-    def patch(path, request_body = {})
-      request(:patch, path, request_body)
+    # @param relative_path [String] The relative path to the endpoint.
+    # @param body [Array, Hash, nil] The request body for the PATCH HTTP request.
+    # @return [Array, Hash, String] The parsed response body.
+    def patch(relative_path, body: {})
+      request(:patch, relative_path, body)
     end
 
-    # Sends a POST request to the 3PL supplier API endpoint.
+    # Performs an HTTP POST request to a 3PL API endpoint.
     #
-    # @param path [String] The relative path to the endpoint.
-    # @param request_body [Hash] The request body for the endpoint.
-    # @return [Array, Hash] The JSON parsed response from the API endpoint.
-    def post(path, request_body)
-      request(:post, path, request_body)
+    # @param relative_path [String] The relative path to the endpoint.
+    # @param body [Array, Hash, nil] The request body for the POST HTTP request.
+    # @return [Array, Hash, String] The parsed response body.
+    def post(relative_path, body: {})
+      request(:post, relative_path, body)
     end
 
-    # Sends a PUT request to the 3PL supplier API endpoint.
+    # Performs an HTTP PUT request to a 3PL API endpoint.
     #
-    # @param path [String] The relative path to the endpoint.
-    # @param request_body [Hash] The request body for the endpoint.
-    # @return [Array, Hash] The JSON parsed response from the API endpoint.
-    def put(path, request_body)
-      request(:put, path, request_body)
+    # @param relative_path [String] The relative path to the endpoint.
+    # @param body [Array, Hash, nil] The optional request body for the PUT HTTP request.
+    # @return [Array, Hash, String] The parsed response body.
+    def put(relative_path, body: nil)
+      return request(:put, relative_path) if body.nil?
+
+      request(:put, relative_path, body)
     end
 
     private
@@ -76,12 +77,6 @@ module FulfilApi
       @api_endpoint ||= "https://#{merchant_id}.fulfil.io"
     end
 
-    # @param path [String] The relative path to the endpoint.
-    # @return [String] The full, relative path to the endpoint.
-    def build_request_path(path)
-      "services/3pl/#{api_version}/#{path}".squeeze("/")
-    end
-
     # @return [Faraday::Connection]
     def connection
       @connection ||= Faraday.new(
@@ -89,7 +84,7 @@ module FulfilApi
         url: api_endpoint,
         request: configuration.request_options
       ) do |connection|
-        connection.adapter :net_http
+        connection.adapter :net_http_persistent
 
         # Configuration of the request middleware
         connection.request :json
@@ -98,6 +93,13 @@ module FulfilApi
         connection.response :json
         connection.response :raise_error
       end
+    end
+
+    # @param relative_path [String] The relative path to the API endpoint.
+    # @return [String] The absolute path for the request to the API endpoint.
+    def expand_relative_path(relative_path)
+      path = relative_path.start_with?("/") ? relative_path[1..] : relative_path
+      "/services/3pl/#{api_version}/#{path}"
     end
 
     # @param exception [Faraday::Error] Any error raised by Faraday during the execution
@@ -114,20 +116,15 @@ module FulfilApi
     end
 
     # @param method [Symbol, String] The HTTP verb for the HTTP request.
-    # @param path [String] The relative path to the endpoint.
-    # @param body [Hash, Array, nil] The request body.
+    # @param relative_path [String] The relative path to the API endpoint.
     # @return [Array, Hash, String] The parsed response body.
-    def request(method, path, body = nil)
-      if body
-        connection.send(method.to_sym, build_request_path(path), body).body
-      else
-        connection.send(method.to_sym, build_request_path(path)).body
-      end
+    def request(method, relative_path, *args, **kwargs)
+      connection.send(method.to_sym, expand_relative_path(relative_path), *args, **kwargs).body
     rescue Faraday::Error => e
       handle_request_error(e)
     end
 
-    # @return [Hash<String, String>]
+    # @return [Hash] The HTTP headers for any HTTP request to the 3PL API.
     def request_headers
       {
         "Authorization" => "Bearer #{auth_token}",
@@ -139,8 +136,8 @@ module FulfilApi
   # Builds an HTTP client to interact with Fulfil's 3PL API endpoint.
   #
   # @example
-  #   FulfilApi.tpl_client.get("shipments")
-  #   FulfilApi.tpl_client.post("shipments", { tracking_number: "123" })
+  #   FulfilApi.tpl_client.get("inbound-transfers")
+  #   FulfilApi.tpl_client.post("inbound-transfers/receive.json", body: { tracking_number: "123" })
   #
   # @return [FulfilApi::TplClient]
   def self.tpl_client

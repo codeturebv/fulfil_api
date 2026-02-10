@@ -152,17 +152,17 @@ end
 The 3PL client is accessible via `FulfilApi.tpl_client` and supports the standard HTTP methods:
 
 ```ruby
-# GET request with optional query parameters
-FulfilApi.tpl_client.get("inbound-transfers", page: 1, per_page: 25)
+# GET request with optional URL parameters
+FulfilApi.tpl_client.get("inbound-transfers", url_parameters: { page: 1, per_page: 25 })
 
 # POST request with a request body
-FulfilApi.tpl_client.post("inbound-transfers/receive.json", { tracking_number: "ABC123" })
+FulfilApi.tpl_client.post("inbound-transfers/receive.json", body: { tracking_number: "ABC123" })
 
 # PUT request with a request body
-FulfilApi.tpl_client.put("inbound-transfers/receive.json", { status: "received" })
+FulfilApi.tpl_client.put("inbound-transfers/receive.json", body: { status: "received" })
 
 # PATCH request with a request body
-FulfilApi.tpl_client.patch("inbound-transfers/receive.json", { status: "received" })
+FulfilApi.tpl_client.patch("inbound-transfers/receive.json", body: { status: "received" })
 
 ```
 
