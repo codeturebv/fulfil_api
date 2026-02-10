@@ -29,15 +29,6 @@ module FulfilApi
       @api_version = tpl_config[:api_version].presence || DEFAULT_API_VERSION
     end
 
-    # Sends a DELETE request to the 3PL supplier API endpoint.
-    #
-    # @param path [String] The relative path to the endpoint.
-    # @param body [Hash] The request body for the endpoint.
-    # @return [Array, Hash] The JSON parsed response from the API endpoint.
-    def delete(path, body: nil)
-      request(:delete, path, body)
-    end
-
     # Sends a GET request to the 3PL supplier API endpoint.
     #
     # @param path [String] The relative path to the endpoint.

@@ -164,8 +164,6 @@ FulfilApi.tpl_client.put("shipments/1", { status: "shipped" })
 # PATCH request with a request body
 FulfilApi.tpl_client.patch("shipments/1", { status: "delivered" })
 
-# DELETE request
-FulfilApi.tpl_client.delete("shipments/1")
 ```
 
 > **NOTE:** For the full list of available 3PL API endpoints, refer to the [Fulfil 3PL Integration API documentation](https://fulfil-3pl-integration-api.readme.io/reference/getting-started-with-your-api).

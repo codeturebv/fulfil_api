@@ -142,14 +142,6 @@ module FulfilApi
       end
     end
 
-    def test_delete_request
-      stub_fulfil_tpl_request(:delete, path: "shipments", id: "1")
-
-      @client.delete("shipments/1")
-
-      assert_requested :delete, %r{services/3pl/v1/shipments/1}i
-    end
-
     def test_reraising_of_http_errors
       stub_fulfil_tpl_request(:get, path: "shipments", status: 422, response: { error: "something went wrong" })
 
