@@ -16,6 +16,7 @@ module FulfilApi
     def test_default_configuration_values
       assert_equal Configuration::DEFAULT_API_VERSION, @config.api_version
       assert_nil @config.merchant_id
+      assert_nil @config.tpl
       assert_equal Configuration::DEFAULT_REQUEST_OPTIONS, @config.request_options
     end
 
@@ -70,6 +71,15 @@ module FulfilApi
       end
 
       assert_equal "v2", FulfilApi.configuration.api_version
+    end
+
+    def test_tpl_configuration
+      FulfilApi.configure do |config|
+        config.merchant_id = "codeture"
+        config.tpl = { auth_token: "my-3pl-token", merchant_id: "tpl-merchant" }
+      end
+
+      assert_equal({ auth_token: "my-3pl-token", merchant_id: "tpl-merchant" }, FulfilApi.configuration.tpl)
     end
   end
 end

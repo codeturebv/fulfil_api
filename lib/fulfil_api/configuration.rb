@@ -6,7 +6,7 @@ module FulfilApi
   # This model holds configuration settings and provides thread-safe access
   #   to these settings.
   class Configuration
-    attr_accessor :access_token, :api_version, :merchant_id, :request_options
+    attr_accessor :access_token, :api_version, :merchant_id, :request_options, :tpl
 
     DEFAULT_API_VERSION = "v2"
     DEFAULT_REQUEST_OPTIONS = { open_timeout: 1, read_timeout: 5, write_timeout: 5, timeout: 5 }.freeze
