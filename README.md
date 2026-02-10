@@ -127,6 +127,49 @@ line_items = FulfilApi::Resource.set(model_name: "sale.line").where(["id", "in",
 line_items = FulfilApi::Resource.set(model_name: "sale.line").find_by(["sale.id", "=", 100])
 ```
 
+### Using the 3PL (TPL) Client
+
+The gem also includes a client for Fulfil's [3PL Integration API](https://fulfil-3pl-integration-api.readme.io/reference/getting-started-with-your-api). This is a separate API that allows third-party logistics providers to interact with Fulfil on behalf of a merchant.
+
+#### Configuration
+
+Configure the 3PL client through the `tpl` option in the configuration block:
+
+```ruby
+FulfilApi.configure do |config|
+  config.merchant_id = "the-id-of-the-merchant"
+
+  config.tpl = {
+    auth_token: ENV["FULFIL_3PL_AUTH_TOKEN"], # required
+    merchant_id: "a-different-merchant-id",   # optional, falls back to config.merchant_id
+    api_version: "v1"                         # optional, defaults to "v1"
+  }
+end
+```
+
+#### Making Requests
+
+The 3PL client is accessible via `FulfilApi.tpl_client` and supports the standard HTTP methods:
+
+```ruby
+# GET request with optional query parameters
+FulfilApi.tpl_client.get("shipments", page: 1, per_page: 25)
+
+# POST request with a request body
+FulfilApi.tpl_client.post("shipments", { tracking_number: "ABC123" })
+
+# PUT request with a request body
+FulfilApi.tpl_client.put("shipments/1", { status: "shipped" })
+
+# PATCH request with a request body
+FulfilApi.tpl_client.patch("shipments/1", { status: "delivered" })
+
+# DELETE request
+FulfilApi.tpl_client.delete("shipments/1")
+```
+
+> **NOTE:** For the full list of available 3PL API endpoints, refer to the [Fulfil 3PL Integration API documentation](https://fulfil-3pl-integration-api.readme.io/reference/getting-started-with-your-api).
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
