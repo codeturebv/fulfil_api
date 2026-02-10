@@ -26,14 +26,14 @@ module FulfilApi
 
       client = FulfilApi::TplClient.new(configuration)
 
-      stub_tpl_request(:get, merchant_id: tpl_merchant_id)
+      stub_fulfil_tpl_request(:get, path: "shipments")
       client.get("shipments")
 
       assert_requested :get, "https://#{tpl_merchant_id}.fulfil.io/services/3pl/v1/shipments"
     end
 
     def test_falls_back_to_global_merchant_id
-      stub_tpl_request(:get, merchant_id: @merchant_id)
+      stub_fulfil_tpl_request(:get, path: "shipments")
 
       @client.get("shipments")
 
@@ -41,7 +41,7 @@ module FulfilApi
     end
 
     def test_defaults_to_v1_api_version
-      stub_tpl_request(:get, merchant_id: @merchant_id)
+      stub_fulfil_tpl_request(:get, path: "shipments")
 
       @client.get("shipments")
 
@@ -56,16 +56,14 @@ module FulfilApi
 
       client = FulfilApi::TplClient.new(configuration)
 
-      stub_request(:get, %r{#{@merchant_id}\.fulfil\.io/services/3pl/v2}i)
-        .and_return(status: 200, body: "{}".to_json, headers: { "Content-Type": "application/json" })
-
+      stub_fulfil_tpl_request(:get, path: "shipments")
       client.get("shipments")
 
       assert_requested :get, "https://#{@merchant_id}.fulfil.io/services/3pl/v2/shipments"
     end
 
     def test_builds_correct_request_path
-      stub_tpl_request(:get, merchant_id: @merchant_id)
+      stub_fulfil_tpl_request(:get, path: "shipments")
 
       @client.get("shipments")
 
@@ -73,7 +71,7 @@ module FulfilApi
     end
 
     def test_squeezes_duplicate_slashes_in_path
-      stub_tpl_request(:get, merchant_id: @merchant_id)
+      stub_fulfil_tpl_request(:get, path: "shipments")
 
       @client.get("/shipments")
 
@@ -81,7 +79,7 @@ module FulfilApi
     end
 
     def test_includes_bearer_token_in_requests
-      stub_tpl_request(:get, merchant_id: @merchant_id)
+      stub_fulfil_tpl_request(:get, path: "shipments")
 
       @client.get("shipments")
 
@@ -91,7 +89,7 @@ module FulfilApi
     end
 
     def test_get_request
-      stub_tpl_request(:get, merchant_id: @merchant_id, response: [{ "id" => 1 }])
+      stub_fulfil_tpl_request(:get, path: "shipments", response: [{ "id" => 1 }])
 
       result = @client.get("shipments")
 
@@ -99,7 +97,7 @@ module FulfilApi
     end
 
     def test_get_request_with_query_params
-      stub_tpl_request(:get, merchant_id: @merchant_id)
+      stub_fulfil_tpl_request(:get, path: "shipments")
 
       @client.get("shipments", page: 1, per_page: 25)
 
@@ -107,7 +105,7 @@ module FulfilApi
     end
 
     def test_get_request_filters_blank_query_params
-      stub_tpl_request(:get, merchant_id: @merchant_id)
+      stub_fulfil_tpl_request(:get, path: "shipments")
 
       @client.get("shipments", page: 1, status: nil, name: "")
 
@@ -115,7 +113,7 @@ module FulfilApi
     end
 
     def test_post_request
-      stub_tpl_request(:post, merchant_id: @merchant_id)
+      stub_fulfil_tpl_request(:post, path: "shipments")
 
       @client.post("shipments", { tracking_number: "ABC123" })
 
@@ -125,7 +123,7 @@ module FulfilApi
     end
 
     def test_put_request
-      stub_tpl_request(:put, merchant_id: @merchant_id)
+      stub_fulfil_tpl_request(:put, path: "shipments", id: "1")
 
       @client.put("shipments/1", { status: "shipped" })
 
@@ -135,7 +133,7 @@ module FulfilApi
     end
 
     def test_patch_request
-      stub_tpl_request(:patch, merchant_id: @merchant_id)
+      stub_fulfil_tpl_request(:patch, path: "shipments", id: "1")
 
       @client.patch("shipments/1", { status: "delivered" })
 
@@ -145,7 +143,7 @@ module FulfilApi
     end
 
     def test_delete_request
-      stub_tpl_request(:delete, merchant_id: @merchant_id)
+      stub_fulfil_tpl_request(:delete, path: "shipments", id: "1")
 
       @client.delete("shipments/1")
 
@@ -153,7 +151,7 @@ module FulfilApi
     end
 
     def test_reraising_of_http_errors
-      stub_tpl_request(:get, merchant_id: @merchant_id, status: 422, response: { error: "something went wrong" })
+      stub_fulfil_tpl_request(:get, path: "shipments", status: 422, response: { error: "something went wrong" })
 
       error =
         assert_raises FulfilApi::Error do
@@ -162,13 +160,6 @@ module FulfilApi
 
       assert_equal 422, error.details[:response_status]
       assert_equal({ error: "something went wrong" }.to_json, error.details[:response_body])
-    end
-
-    private
-
-    def stub_tpl_request(method, merchant_id:, response: {}, status: 200)
-      stub_request(method.to_sym, %r{#{merchant_id}\.fulfil\.io/services/3pl/v1}i)
-        .and_return(status: status, body: response.to_json, headers: { "Content-Type": "application/json" })
     end
   end
 end
