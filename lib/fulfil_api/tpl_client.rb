@@ -9,8 +9,8 @@ module FulfilApi
   # the 3PL supplier API using standard HTTP methods.
   #
   # @example Using the TPL client
-  #   FulfilApi.tpl_client.get("inbound-transfers", url_parameters: { page: 1 })
-  #   FulfilApi.tpl_client.post("inbound-transfers/receive.json", body: { tracking_number: "123" })
+  #   FulfilApi.tpl_client.get("inbound-transfers", page: 1)
+  #   FulfilApi.tpl_client.post("inbound-transfers/receive.json", { tracking_number: "123" })
   class TplClient
     class ConfigurationError < FulfilApi::Error; end
 
@@ -33,10 +33,10 @@ module FulfilApi
     # Performs an HTTP GET request to a 3PL API endpoint.
     #
     # @param relative_path [String] The relative path to the endpoint.
-    # @param url_parameters [Hash, nil] The optional URL parameters for the API endpoint.
+    # @param url_parameters [Hash] The optional URL parameters for the API endpoint.
     # @return [Array, Hash, String] The parsed response body.
-    def get(relative_path, url_parameters: nil)
-      request(:get, relative_path, url_parameters)
+    def get(relative_path, **url_parameters)
+      request(:get, relative_path, url_parameters.presence)
     end
 
     # Performs an HTTP PATCH request to a 3PL API endpoint.
@@ -44,7 +44,7 @@ module FulfilApi
     # @param relative_path [String] The relative path to the endpoint.
     # @param body [Array, Hash, nil] The request body for the PATCH HTTP request.
     # @return [Array, Hash, String] The parsed response body.
-    def patch(relative_path, body: {})
+    def patch(relative_path, body = {})
       request(:patch, relative_path, body)
     end
 
@@ -53,7 +53,7 @@ module FulfilApi
     # @param relative_path [String] The relative path to the endpoint.
     # @param body [Array, Hash, nil] The request body for the POST HTTP request.
     # @return [Array, Hash, String] The parsed response body.
-    def post(relative_path, body: {})
+    def post(relative_path, body = {})
       request(:post, relative_path, body)
     end
 
@@ -62,7 +62,7 @@ module FulfilApi
     # @param relative_path [String] The relative path to the endpoint.
     # @param body [Array, Hash, nil] The optional request body for the PUT HTTP request.
     # @return [Array, Hash, String] The parsed response body.
-    def put(relative_path, body: nil)
+    def put(relative_path, body = nil)
       return request(:put, relative_path) if body.nil?
 
       request(:put, relative_path, body)
@@ -137,7 +137,7 @@ module FulfilApi
   #
   # @example
   #   FulfilApi.tpl_client.get("inbound-transfers")
-  #   FulfilApi.tpl_client.post("inbound-transfers/receive.json", body: { tracking_number: "123" })
+  #   FulfilApi.tpl_client.post("inbound-transfers/receive.json", { tracking_number: "123" })
   #
   # @return [FulfilApi::TplClient]
   def self.tpl_client
