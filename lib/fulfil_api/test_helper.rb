@@ -65,6 +65,26 @@ module FulfilApi
         .and_return(status: status, body: response.to_json, headers: { "Content-Type": "application/json" })
     end
 
+    # Stubs an HTTP PUT request to the Fulfil report API based on the provided parameters.
+    #
+    # @param [Hash] response The response body to return as a JSON object (default is {}).
+    # @param [Integer] status The HTTP status code to return (default is 200).
+    # @param [Hash] options Additional options for the request URL.
+    # @option options [String] :report_name The report identifier
+    #   (e.g., 'account.invoice.html').
+    #
+    # @return [WebMock::RequestStub] The WebMock request stub object.
+    #
+    # @example Stub a report request for a specific report
+    #   stub_fulfil_report_request(report_name: "account.invoice.html", response: { url: "https://..." })
+    #
+    # @example Stub all report requests
+    #   stub_fulfil_report_request(response: { url: "https://..." })
+    def stub_fulfil_report_request(response: {}, status: 200, **options)
+      stubbed_report_request_for(**options)
+        .and_return(status: status, body: response.to_json, headers: { "Content-Type": "application/json" })
+    end
+
     private
 
     # Builds the WebMock request stub for the Fulfil 3PL API based on the provided method and options.
@@ -81,6 +101,22 @@ module FulfilApi
         stub_request(method.to_sym, %r{fulfil.io/services/3pl/v\d+/#{path}(.*)}i)
       else
         stub_request(method.to_sym, %r{fulfil.io/services/3pl/v\d+}i)
+      end
+    end
+
+    # Builds the WebMock request stub for the Fulfil report API based on the provided options.
+    #
+    # @param [Hash] options Additional options for the request URL.
+    # @option options [String] :report_name The report identifier
+    #   (e.g., 'account.invoice.html').
+    #
+    # @return [WebMock::RequestStub] The WebMock request stub object.
+    def stubbed_report_request_for(**options)
+      case options.transform_keys(&:to_sym)
+      in { report_name: }
+        stub_request(:put, %r{fulfil.io/api/v\d+/report/#{report_name}(.*)}i)
+      else
+        stub_request(:put, %r{fulfil.io/api/v\d+/report}i)
       end
     end
 
