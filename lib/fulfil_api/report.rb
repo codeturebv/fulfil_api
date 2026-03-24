@@ -6,7 +6,7 @@ module FulfilApi
   # URL where the generated document can be downloaded.
   #
   # @example Generate and download an invoice PDF
-  #   report = FulfilApi::Report.generate("account.invoice.html", ids: [3991])
+  #   report = FulfilApi::Report.generate("account.invoice.html", 3991)
   #   report.url       # => "https://..."
   #   report.filename  # => "Invoice.pdf"
   #   report.mimetype  # => "application/pdf"
@@ -16,14 +16,14 @@ module FulfilApi
   class Report
     attr_reader :filename, :mimetype, :url
 
-    # Generates a report for the given record IDs.
+    # Generates a report for the given record ID(s).
     #
     # @param report_name [String] The report identifier (e.g., "account.invoice.html").
-    # @param ids [Array<Integer>] The record IDs to generate the report for.
+    # @param id_or_ids [Integer, Array<Integer>] A single ID or an array of IDs.
     # @param data [Hash] Optional additional data for the report.
     # @return [FulfilApi::Report] A report object with filename, mimetype, and url.
-    def self.generate(report_name, ids:, data: {})
-      response = FulfilApi.client.put("report/#{report_name}", body: { ids: ids, data: data })
+    def self.generate(report_name, id_or_ids, data: {})
+      response = FulfilApi.client.put("report/#{report_name}", body: { objects: Array(id_or_ids).flatten, data: data })
 
       new(
         filename: response["filename"],
