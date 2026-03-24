@@ -34,6 +34,7 @@ module FulfilApi
 
       assert_requested :put, %r{report/account.invoice.html}i do |request|
         body = JSON.parse(request.body)
+
         assert_equal [3991], body["ids"]
         assert_equal({ "language" => "en" }, body["data"])
       end
@@ -49,7 +50,8 @@ module FulfilApi
 
       assert_requested :put, %r{report/account.invoice.html}i do |request|
         body = JSON.parse(request.body)
-        assert_equal({}, body["data"])
+
+        assert_empty(body["data"])
       end
     end
 
