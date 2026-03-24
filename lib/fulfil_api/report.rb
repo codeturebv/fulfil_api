@@ -5,11 +5,14 @@ module FulfilApi
   # (e.g., PDF invoices) via Fulfil's report API. The API returns a temporary
   # URL where the generated document can be downloaded.
   #
-  # @example Generate an invoice PDF
+  # @example Generate and download an invoice PDF
   #   report = FulfilApi::Report.generate("account.invoice.html", ids: [3991])
   #   report.url       # => "https://..."
   #   report.filename  # => "Invoice.pdf"
   #   report.mimetype  # => "application/pdf"
+  #
+  #   tempfile = report.download
+  #   tempfile.path    # => "/tmp/fulfil_report20260324-12345.pdf"
   class Report
     attr_reader :filename, :mimetype, :url
 
@@ -20,6 +23,23 @@ module FulfilApi
       @filename = filename
       @mimetype = mimetype
       @url = url
+    end
+
+    # Downloads the report from the temporary URL and returns a {Tempfile}.
+    #
+    # The tempfile preserves the file extension from the report's filename
+    # (e.g., ".pdf") so it can be used directly with file upload APIs.
+    #
+    # @return [Tempfile] A tempfile containing the downloaded report.
+    def download
+      response = Faraday.get(url)
+
+      extension = File.extname(filename)
+      tempfile = Tempfile.new(["fulfil_report", extension])
+      tempfile.binmode
+      tempfile.write(response.body)
+      tempfile.rewind
+      tempfile
     end
 
     # Generates a report for the given record IDs.

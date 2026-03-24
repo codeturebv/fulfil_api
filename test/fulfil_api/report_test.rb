@@ -86,6 +86,60 @@ module FulfilApi
       assert_equal "https://example.com/invoice.pdf", report.url
     end
 
+    def test_download_returns_a_tempfile_with_report_contents
+      pdf_content = "%PDF-1.4 fake content"
+
+      stub_request(:get, "https://example.com/invoice.pdf")
+        .to_return(status: 200, body: pdf_content)
+
+      report = FulfilApi::Report.new(
+        filename: "Invoice.pdf",
+        mimetype: "application/pdf",
+        url: "https://example.com/invoice.pdf"
+      )
+
+      tempfile = report.download
+
+      assert_instance_of Tempfile, tempfile
+      assert_equal pdf_content, tempfile.read
+    ensure
+      tempfile&.close!
+    end
+
+    def test_download_preserves_file_extension
+      stub_request(:get, "https://example.com/invoice.pdf")
+        .to_return(status: 200, body: "content")
+
+      report = FulfilApi::Report.new(
+        filename: "Invoice.pdf",
+        mimetype: "application/pdf",
+        url: "https://example.com/invoice.pdf"
+      )
+
+      tempfile = report.download
+
+      assert_match(/\.pdf\z/, tempfile.path)
+    ensure
+      tempfile&.close!
+    end
+
+    def test_download_rewinds_tempfile_for_immediate_reading
+      stub_request(:get, "https://example.com/invoice.pdf")
+        .to_return(status: 200, body: "file content")
+
+      report = FulfilApi::Report.new(
+        filename: "Invoice.pdf",
+        mimetype: "application/pdf",
+        url: "https://example.com/invoice.pdf"
+      )
+
+      tempfile = report.download
+
+      assert_equal 0, tempfile.pos
+    ensure
+      tempfile&.close!
+    end
+
     def test_generate_raises_error_on_api_failure
       stub_fulfil_report_request(
         report_name: "account.invoice.html",
