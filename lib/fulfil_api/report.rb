@@ -16,6 +16,22 @@ module FulfilApi
   class Report
     attr_reader :filename, :mimetype, :url
 
+    # Generates a report for the given record IDs.
+    #
+    # @param report_name [String] The report identifier (e.g., "account.invoice.html").
+    # @param ids [Array<Integer>] The record IDs to generate the report for.
+    # @param data [Hash] Optional additional data for the report.
+    # @return [FulfilApi::Report] A report object with filename, mimetype, and url.
+    def self.generate(report_name, ids:, data: {})
+      response = FulfilApi.client.put("report/#{report_name}", body: { ids: ids, data: data })
+
+      new(
+        filename: response["filename"],
+        mimetype: response["mimetype"],
+        url: response["url"]
+      )
+    end
+
     # @param filename [String] The filename of the generated report.
     # @param mimetype [String] The MIME type of the generated report.
     # @param url [String] The temporary URL to download the generated report.
@@ -40,22 +56,6 @@ module FulfilApi
       tempfile.write(response.body)
       tempfile.rewind
       tempfile
-    end
-
-    # Generates a report for the given record IDs.
-    #
-    # @param report_name [String] The report identifier (e.g., "account.invoice.html").
-    # @param ids [Array<Integer>] The record IDs to generate the report for.
-    # @param data [Hash] Optional additional data for the report.
-    # @return [FulfilApi::Report] A report object with filename, mimetype, and url.
-    def self.generate(report_name, ids:, data: {})
-      response = FulfilApi.client.put("report/#{report_name}", body: { ids: ids, data: data })
-
-      new(
-        filename: response["filename"],
-        mimetype: response["mimetype"],
-        url: response["url"]
-      )
     end
   end
 end
