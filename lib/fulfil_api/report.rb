@@ -16,14 +16,14 @@ module FulfilApi
   class Report
     attr_reader :filename, :mimetype, :url
 
-    # Generates a report for the given record ID(s).
+    # Generates a report for the given record ID.
     #
     # @param report_name [String] The report identifier (e.g., "account.invoice.html").
-    # @param id_or_ids [Integer, Array<Integer>] A single ID or an array of IDs.
+    # @param id [Integer] The record ID to generate the report for.
     # @param data [Hash] Optional additional data for the report.
     # @return [FulfilApi::Report] A report object with filename, mimetype, and url.
-    def self.generate(report_name, id_or_ids, data: {})
-      response = FulfilApi.client.put("report/#{report_name}", body: { objects: Array(id_or_ids).flatten, data: data })
+    def self.generate(report_name, id, data: {})
+      response = FulfilApi.client.put("report/#{report_name}", body: { objects: [id], data: data })
 
       new(
         filename: response["filename"],

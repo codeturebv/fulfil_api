@@ -19,12 +19,12 @@ module FulfilApi
         response: { filename: "Invoice.pdf", mimetype: "application/pdf", url: "https://example.com/invoice.pdf" }
       )
 
-      FulfilApi::Report.generate("account.invoice.html", [3991])
+      FulfilApi::Report.generate("account.invoice.html", 3991)
 
       assert_requested :put, %r{#{@merchant_id}.fulfil.io/api/v2/report/account.invoice.html}i
     end
 
-    def test_generate_wraps_a_single_id_in_an_array
+    def test_generate_wraps_id_in_an_array
       stub_fulfil_report_request(
         report_name: "account.invoice.html",
         response: { filename: "Invoice.pdf", mimetype: "application/pdf", url: "https://example.com/invoice.pdf" }
@@ -39,13 +39,13 @@ module FulfilApi
       end
     end
 
-    def test_generate_sends_ids_and_data_in_request_body
+    def test_generate_sends_id_and_data_in_request_body
       stub_fulfil_report_request(
         report_name: "account.invoice.html",
         response: { filename: "Invoice.pdf", mimetype: "application/pdf", url: "https://example.com/invoice.pdf" }
       )
 
-      FulfilApi::Report.generate("account.invoice.html", [3991], data: { language: "en" })
+      FulfilApi::Report.generate("account.invoice.html", 3991, data: { language: "en" })
 
       assert_requested :put, %r{report/account.invoice.html}i do |request|
         body = JSON.parse(request.body)
@@ -61,7 +61,7 @@ module FulfilApi
         response: { filename: "Invoice.pdf", mimetype: "application/pdf", url: "https://example.com/invoice.pdf" }
       )
 
-      FulfilApi::Report.generate("account.invoice.html", [3991])
+      FulfilApi::Report.generate("account.invoice.html", 3991)
 
       assert_requested :put, %r{report/account.invoice.html}i do |request|
         body = JSON.parse(request.body)
@@ -76,7 +76,7 @@ module FulfilApi
         response: { filename: "Invoice.pdf", mimetype: "application/pdf", url: "https://example.com/invoice.pdf" }
       )
 
-      report = FulfilApi::Report.generate("account.invoice.html", [3991])
+      report = FulfilApi::Report.generate("account.invoice.html", 3991)
 
       assert_equal "Invoice.pdf", report.filename
     end
@@ -87,7 +87,7 @@ module FulfilApi
         response: { filename: "Invoice.pdf", mimetype: "application/pdf", url: "https://example.com/invoice.pdf" }
       )
 
-      report = FulfilApi::Report.generate("account.invoice.html", [3991])
+      report = FulfilApi::Report.generate("account.invoice.html", 3991)
 
       assert_equal "application/pdf", report.mimetype
     end
@@ -98,7 +98,7 @@ module FulfilApi
         response: { filename: "Invoice.pdf", mimetype: "application/pdf", url: "https://example.com/invoice.pdf" }
       )
 
-      report = FulfilApi::Report.generate("account.invoice.html", [3991])
+      report = FulfilApi::Report.generate("account.invoice.html", 3991)
 
       assert_equal "https://example.com/invoice.pdf", report.url
     end
@@ -166,7 +166,7 @@ module FulfilApi
 
       error =
         assert_raises FulfilApi::Error do
-          FulfilApi::Report.generate("account.invoice.html", [3991])
+          FulfilApi::Report.generate("account.invoice.html", 3991)
         end
 
       assert_equal 422, error.details[:response_status]
