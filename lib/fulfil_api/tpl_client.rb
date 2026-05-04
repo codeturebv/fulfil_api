@@ -127,8 +127,7 @@ module FulfilApi
     # @return [Hash] The HTTP headers for any HTTP request to the 3PL API.
     def request_headers
       {
-        "Authorization" => "Bearer #{auth_token}",
-        "Content-Type" => "application/json"
+        "Authorization" => "Bearer #{auth_token}"
       }
     end
   end
