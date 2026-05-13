@@ -155,5 +155,39 @@ module FulfilApi
       assert_equal 422, error.details[:response_status]
       assert_equal({ error: "something went wrong" }.to_json, error.details[:response_body])
     end
+
+    def test_reuses_connection_across_client_instances_with_same_configuration
+      FulfilApi::TplClient.reset_connection_cache!
+
+      first_client = FulfilApi::TplClient.new(@configuration)
+      second_client = FulfilApi::TplClient.new(@configuration)
+
+      assert_same first_client.send(:connection), second_client.send(:connection)
+    end
+
+    def test_shares_connection_across_clients_with_different_auth_tokens_for_same_merchant
+      FulfilApi::TplClient.reset_connection_cache!
+
+      first_client = FulfilApi::TplClient.new(
+        FulfilApi::Configuration.new(
+          merchant_id: @merchant_id,
+          tpl: { auth_token: "token-a" }
+        )
+      )
+      second_client = FulfilApi::TplClient.new(
+        FulfilApi::Configuration.new(
+          merchant_id: @merchant_id,
+          tpl: { auth_token: "token-b" }
+        )
+      )
+
+      assert_same first_client.send(:connection), second_client.send(:connection)
+    end
+
+    def test_excludes_credentials_from_connection_cache_key
+      FulfilApi::TplClient.reset_connection_cache!
+
+      refute_includes @client.send(:connection_cache_key), @auth_token
+    end
   end
 end

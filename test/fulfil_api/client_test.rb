@@ -156,5 +156,107 @@ module FulfilApi
 
       assert_requested :delete, %r{sale\.sale/123}i
     end
+
+    def test_get_request_does_not_send_content_type_header
+      stub_fulfil_request(:get)
+
+      @client.get("sale.sale/123")
+
+      assert_requested :get, %r{sale\.sale/123}i do |request|
+        refute_includes request.headers.keys, "Content-Type"
+      end
+    end
+
+    def test_delete_request_does_not_send_content_type_header
+      stub_fulfil_request(:delete)
+
+      @client.delete("sale.sale/123")
+
+      assert_requested :delete, %r{sale\.sale/123}i do |request|
+        refute_includes request.headers.keys, "Content-Type"
+      end
+    end
+
+    def test_post_request_sends_json_content_type_header
+      stub_fulfil_request(:post)
+
+      @client.post("sale.sale", body: { id: 1 })
+
+      assert_requested :post, /sale\.sale/i, headers: { "Content-Type" => "application/json" }
+    end
+
+    def test_reuses_connection_across_client_instances_with_same_configuration
+      FulfilApi::Client.reset_connection_cache!
+
+      configuration = FulfilApi::Configuration.new(merchant_id: @merchant_id)
+
+      first_client = FulfilApi::Client.new(configuration)
+      second_client = FulfilApi::Client.new(configuration)
+
+      assert_same first_client.send(:connection), second_client.send(:connection)
+    end
+
+    def test_builds_separate_connections_for_different_merchants
+      FulfilApi::Client.reset_connection_cache!
+
+      first_client = FulfilApi::Client.new(FulfilApi::Configuration.new(merchant_id: "merchant-a"))
+      second_client = FulfilApi::Client.new(FulfilApi::Configuration.new(merchant_id: "merchant-b"))
+
+      refute_same first_client.send(:connection), second_client.send(:connection)
+    end
+
+    def test_shares_connection_across_clients_with_different_access_tokens_for_same_merchant
+      FulfilApi::Client.reset_connection_cache!
+
+      first_client = FulfilApi::Client.new(
+        FulfilApi::Configuration.new(
+          merchant_id: @merchant_id,
+          access_token: FulfilApi::AccessToken.new("token-a")
+        )
+      )
+      second_client = FulfilApi::Client.new(
+        FulfilApi::Configuration.new(
+          merchant_id: @merchant_id,
+          access_token: FulfilApi::AccessToken.new("token-b")
+        )
+      )
+
+      assert_same first_client.send(:connection), second_client.send(:connection)
+    end
+
+    def test_excludes_credentials_from_connection_cache_key
+      FulfilApi::Client.reset_connection_cache!
+
+      configuration = FulfilApi::Configuration.new(
+        merchant_id: @merchant_id,
+        access_token: FulfilApi::AccessToken.new("super-secret-token")
+      )
+      client = FulfilApi::Client.new(configuration)
+
+      refute_includes client.send(:connection_cache_key), "super-secret-token"
+    end
+
+    def test_applies_access_token_per_request_when_connection_is_shared
+      FulfilApi::Client.reset_connection_cache!
+
+      first_token = FulfilApi::AccessToken.new(SecureRandom.uuid)
+      second_token = FulfilApi::AccessToken.new(SecureRandom.uuid)
+
+      stub_fulfil_request(:get)
+
+      build_client(first_token).get("sale.sale/123")
+      build_client(second_token).get("sale.sale/123")
+
+      assert_requested :get, %r{sale\.sale/123}i, headers: { "X-Api-Key" => first_token.value }, times: 1
+      assert_requested :get, %r{sale\.sale/123}i, headers: { "X-Api-Key" => second_token.value }, times: 1
+    end
+
+    private
+
+    def build_client(access_token)
+      FulfilApi::Client.new(
+        FulfilApi::Configuration.new(merchant_id: @merchant_id, access_token: access_token)
+      )
+    end
   end
 end
