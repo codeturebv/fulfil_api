@@ -168,12 +168,23 @@ module FulfilApi
     # @return [Array, Hash, String] The parsed response body.
     def request(method, relative_path, *args, **kwargs)
       response = connection.send(method.to_sym, expand_relative_path(relative_path), *args, **kwargs) do |req|
-        req.headers["Authorization"] = "Bearer #{auth_token}"
+        apply_authentication(req)
       end
 
       response.body
     rescue Faraday::Error => e
       handle_request_error(e)
+    end
+
+    # Applies the configured bearer token to the request as an HTTP header.
+    #
+    # Authentication is set per-request rather than on the shared {#connection},
+    #   so the connection cache does not need to know about credentials.
+    #
+    # @param request [Faraday::Request] The request being prepared.
+    # @return [void]
+    def apply_authentication(request)
+      request.headers["Authorization"] = "Bearer #{auth_token}"
     end
   end
 
