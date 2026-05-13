@@ -102,13 +102,13 @@ module FulfilApi
     #   connection be shared across configurations that target the same merchant
     #   with different access tokens.
     #
+    # No `Content-Type` header is set on the connection. The `:json` request
+    #   middleware adds it on requests that actually have a body, so bodyless
+    #   verbs (GET, DELETE) are not sent with a misleading content type.
+    #
     # @return [Faraday::Connection]
     def build_connection
-      Faraday.new(
-        headers: { "Content-Type" => "application/json" },
-        url: api_endpoint,
-        request: configuration.request_options
-      ) do |connection|
+      Faraday.new(url: api_endpoint, request: configuration.request_options) do |connection|
         connection.adapter :net_http_persistent # TODO: Allow passing configuration options
 
         # Configuration of the request middleware

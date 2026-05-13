@@ -157,6 +157,34 @@ module FulfilApi
       assert_requested :delete, %r{sale\.sale/123}i
     end
 
+    def test_get_request_does_not_send_content_type_header
+      stub_fulfil_request(:get)
+
+      @client.get("sale.sale/123")
+
+      assert_requested :get, %r{sale\.sale/123}i do |request|
+        refute_includes request.headers.keys, "Content-Type"
+      end
+    end
+
+    def test_delete_request_does_not_send_content_type_header
+      stub_fulfil_request(:delete)
+
+      @client.delete("sale.sale/123")
+
+      assert_requested :delete, %r{sale\.sale/123}i do |request|
+        refute_includes request.headers.keys, "Content-Type"
+      end
+    end
+
+    def test_post_request_sends_json_content_type_header
+      stub_fulfil_request(:post)
+
+      @client.post("sale.sale", body: { id: 1 })
+
+      assert_requested :post, /sale\.sale/i, headers: { "Content-Type" => "application/json" }
+    end
+
     def test_reuses_connection_across_client_instances_with_same_configuration
       FulfilApi::Client.reset_connection_cache!
 
