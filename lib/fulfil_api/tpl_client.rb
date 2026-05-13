@@ -16,6 +16,36 @@ module FulfilApi
 
     DEFAULT_API_VERSION = "v1"
 
+    @connection_cache = {}
+    @connection_cache_mutex = Mutex.new
+
+    class << self
+      # Looks up a memoized {Faraday::Connection} for the given cache key, or
+      #   builds and stores one by yielding the block.
+      #
+      # The cache is process-wide, so the underlying `net_http_persistent` adapter
+      #   can actually reuse its TCP/TLS connection pool across requests. Without
+      #   this, each `FulfilApi.tpl_client` call would instantiate a fresh Faraday
+      #   connection, defeating the purpose of the persistent adapter.
+      #
+      # @param cache_key [Array] A key uniquely identifying the connection.
+      # @yieldreturn [Faraday::Connection] The newly built connection.
+      # @return [Faraday::Connection]
+      def connection_for(cache_key)
+        @connection_cache_mutex.synchronize do
+          @connection_cache[cache_key] ||= yield
+        end
+      end
+
+      # Clears the memoized connection cache. Intended for use in test suites
+      #   that need to isolate connection state between tests.
+      #
+      # @return [void]
+      def reset_connection_cache!
+        @connection_cache_mutex.synchronize { @connection_cache.clear }
+      end
+    end
+
     # @param configuration [FulfilApi::Configuration]
     def initialize(configuration)
       @configuration = configuration
@@ -77,9 +107,19 @@ module FulfilApi
       @api_endpoint ||= "https://#{merchant_id}.fulfil.io"
     end
 
+    # Returns a {Faraday::Connection} for the current configuration, reusing the
+    #   memoized connection from the class-level cache whenever possible.
+    #
     # @return [Faraday::Connection]
     def connection
-      @connection ||= Faraday.new(
+      self.class.connection_for(connection_cache_key) { build_connection }
+    end
+
+    # Builds a fresh {Faraday::Connection} for the current configuration.
+    #
+    # @return [Faraday::Connection]
+    def build_connection
+      Faraday.new(
         headers: request_headers,
         url: api_endpoint,
         request: configuration.request_options
@@ -93,6 +133,11 @@ module FulfilApi
         connection.response :json
         connection.response :raise_error
       end
+    end
+
+    # @return [Array] The cache key identifying a unique connection.
+    def connection_cache_key
+      [merchant_id, auth_token, api_version, configuration.request_options]
     end
 
     # @param relative_path [String] The relative path to the API endpoint.
