@@ -96,10 +96,16 @@ module FulfilApi
 
     # Builds a fresh {Faraday::Connection} for the current configuration.
     #
+    # The connection carries no credentials — authentication headers are applied
+    #   per-request in {#request}. This keeps tokens out of any long-lived data
+    #   structure (cache keys, the connection's default headers) and lets a single
+    #   connection be shared across configurations that target the same merchant
+    #   with different access tokens.
+    #
     # @return [Faraday::Connection]
     def build_connection
       Faraday.new(
-        headers: request_headers,
+        headers: { "Content-Type" => "application/json" },
         url: api_endpoint,
         request: configuration.request_options
       ) do |connection|
@@ -116,12 +122,7 @@ module FulfilApi
 
     # @return [Array] The cache key identifying a unique connection.
     def connection_cache_key
-      [
-        configuration.merchant_id,
-        configuration.access_token&.value,
-        configuration.access_token&.type,
-        configuration.request_options
-      ]
+      [configuration.merchant_id, configuration.request_options]
     end
 
     # @param relative_path [String] The relative path to the API endpoint.
@@ -148,17 +149,26 @@ module FulfilApi
     # @param relative_path [String] The relative path to the API endpoint.
     # @return [Array, Hash, String] The parsed response body.
     def request(method, relative_path, *args, **kwargs)
-      connection.send(method.to_sym, expand_relative_path(relative_path), *args, **kwargs).body
+      response = connection.send(method.to_sym, expand_relative_path(relative_path), *args, **kwargs) do |req|
+        apply_authentication(req)
+      end
+
+      response.body
     rescue Faraday::Error => e
       handle_request_error(e)
     end
 
-    # @return [Hash] The HTTP headers for any HTTP request to Fulfil.
-    def request_headers
-      default_headers = { "Content-Type" => "application/json" }
-      return default_headers if configuration.access_token.nil?
+    # Applies the configured access token to the request as an HTTP header.
+    #
+    # Authentication is set per-request rather than on the shared {#connection},
+    #   so the connection cache does not need to know about credentials.
+    #
+    # @param request [Faraday::Request] The request being prepared.
+    # @return [void]
+    def apply_authentication(request)
+      return if configuration.access_token.nil?
 
-      default_headers.merge(**configuration.access_token.to_http_header)
+      configuration.access_token.to_http_header.each { |name, value| request.headers[name] = value }
     end
   end
 

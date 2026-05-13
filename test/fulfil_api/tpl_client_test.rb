@@ -165,7 +165,7 @@ module FulfilApi
       assert_same first_client.send(:connection), second_client.send(:connection)
     end
 
-    def test_builds_separate_connections_for_different_auth_tokens
+    def test_shares_connection_across_clients_with_different_auth_tokens_for_same_merchant
       FulfilApi::TplClient.reset_connection_cache!
 
       first_client = FulfilApi::TplClient.new(
@@ -181,7 +181,13 @@ module FulfilApi
         )
       )
 
-      refute_same first_client.send(:connection), second_client.send(:connection)
+      assert_same first_client.send(:connection), second_client.send(:connection)
+    end
+
+    def test_excludes_credentials_from_connection_cache_key
+      FulfilApi::TplClient.reset_connection_cache!
+
+      refute_includes @client.send(:connection_cache_key), @auth_token
     end
   end
 end

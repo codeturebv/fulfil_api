@@ -117,10 +117,13 @@ module FulfilApi
 
     # Builds a fresh {Faraday::Connection} for the current configuration.
     #
+    # The connection carries no credentials — the bearer token is applied
+    #   per-request in {#request}, keeping it out of long-lived data structures
+    #   such as cache keys or default connection headers.
+    #
     # @return [Faraday::Connection]
     def build_connection
       Faraday.new(
-        headers: request_headers,
         url: api_endpoint,
         request: configuration.request_options
       ) do |connection|
@@ -137,7 +140,7 @@ module FulfilApi
 
     # @return [Array] The cache key identifying a unique connection.
     def connection_cache_key
-      [merchant_id, auth_token, api_version, configuration.request_options]
+      [merchant_id, api_version, configuration.request_options]
     end
 
     # @param relative_path [String] The relative path to the API endpoint.
@@ -164,16 +167,13 @@ module FulfilApi
     # @param relative_path [String] The relative path to the API endpoint.
     # @return [Array, Hash, String] The parsed response body.
     def request(method, relative_path, *args, **kwargs)
-      connection.send(method.to_sym, expand_relative_path(relative_path), *args, **kwargs).body
+      response = connection.send(method.to_sym, expand_relative_path(relative_path), *args, **kwargs) do |req|
+        req.headers["Authorization"] = "Bearer #{auth_token}"
+      end
+
+      response.body
     rescue Faraday::Error => e
       handle_request_error(e)
-    end
-
-    # @return [Hash] The HTTP headers for any HTTP request to the 3PL API.
-    def request_headers
-      {
-        "Authorization" => "Bearer #{auth_token}"
-      }
     end
   end
 
