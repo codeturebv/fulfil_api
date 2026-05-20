@@ -15,7 +15,21 @@ module FulfilApi
 
     # @return [String]
     def message
+      body_message = parsed_body_message
+      return "[FulfilApi::Error] #{body_message}" if body_message
+
       "[FulfilApi::Error] #{super}"
+    end
+
+    private
+
+    def parsed_body_message
+      body = details&.dig(:response_body)
+      return unless body
+
+      JSON.parse(body)
+    rescue JSON::ParserError
+      nil
     end
   end
 end
