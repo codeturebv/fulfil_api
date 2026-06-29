@@ -7,9 +7,22 @@ module FulfilApi
   #   to these settings.
   class Configuration
     attr_accessor :access_token, :api_version, :merchant_id, :request_options, :tpl
+    attr_reader :connection_options
 
     DEFAULT_API_VERSION = "v2"
     DEFAULT_REQUEST_OPTIONS = { open_timeout: 1, read_timeout: 5, write_timeout: 5, timeout: 5 }.freeze
+
+    # Tuning for the persistent (keep-alive) HTTP connection.
+    #
+    # `max_retries` re-enables Ruby's built-in retry for idempotent requests
+    #   (GET/HEAD/PUT/DELETE/OPTIONS). The `net_http_persistent` adapter forces
+    #   it to 0, which means a keep-alive socket the server has already dropped
+    #   surfaces as a read timeout instead of being transparently retried on a
+    #   fresh socket. POST is never auto-retried, so this is side-effect safe.
+    #
+    # `idle_timeout` and `pool_size` are passed through to the underlying
+    #   Net::HTTP::Persistent connection when set.
+    DEFAULT_CONNECTION_OPTIONS = { max_retries: 1 }.freeze
 
     # Initializes the configuration with optional settings.
     #
@@ -25,6 +38,16 @@ module FulfilApi
       set_default_options
     end
 
+    # Merges the provided connection options over the defaults so that, for
+    #   example, setting only `idle_timeout` still keeps the default
+    #   `max_retries`. Assigning `nil` resets to the defaults.
+    #
+    # @param options [Hash, nil] The connection options to apply.
+    # @return [void]
+    def connection_options=(options)
+      @connection_options = DEFAULT_CONNECTION_OPTIONS.merge(options || {})
+    end
+
     private
 
     # Sets the default options for the gem configuration.
@@ -36,6 +59,7 @@ module FulfilApi
     def set_default_options
       self.api_version = DEFAULT_API_VERSION if api_version.nil?
       self.request_options = DEFAULT_REQUEST_OPTIONS if request_options.nil?
+      self.connection_options = nil if connection_options.nil?
     end
   end
 
