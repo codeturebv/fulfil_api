@@ -94,6 +94,33 @@ module FulfilApi
       assert_equal "v2", FulfilApi.configuration.api_version
     end
 
+    def test_with_config_inherits_unspecified_options_from_active_configuration
+      FulfilApi.configure do |config|
+        config.merchant_id = "codeture"
+        config.access_token = FulfilApi::AccessToken.new("super-secret-token")
+      end
+
+      FulfilApi.with_config(request_options: { read_timeout: 60 }) do
+        assert_equal "codeture", FulfilApi.configuration.merchant_id
+        assert_equal "super-secret-token", FulfilApi.configuration.access_token.value
+        assert_equal 60, FulfilApi.configuration.request_options[:read_timeout]
+      end
+    end
+
+    def test_with_config_does_not_mutate_the_active_configuration
+      FulfilApi.configure do |config|
+        config.merchant_id = "codeture"
+        config.request_options = { read_timeout: 5 }
+      end
+
+      FulfilApi.with_config(request_options: { read_timeout: 60 }) do
+        # Temporary override is active inside the block.
+      end
+
+      assert_equal "codeture", FulfilApi.configuration.merchant_id
+      assert_equal 5, FulfilApi.configuration.request_options[:read_timeout]
+    end
+
     def test_tpl_configuration
       FulfilApi.configure do |config|
         config.merchant_id = "codeture"

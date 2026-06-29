@@ -99,15 +99,23 @@ module FulfilApi
       end
   end
 
-  # Temporarily applies the provided configuration options within a block,
-  #   and then reverts to the original configuration after the block executes.
+  # Temporarily applies the provided configuration options on top of the
+  #   currently active configuration, and then reverts after the block executes.
+  #
+  # The temporary options are merged over a copy of the active configuration, so
+  #   a block only needs to specify what it overrides — credentials and other
+  #   settings (`access_token`, `merchant_id`, ...) are inherited rather than
+  #   reset to their defaults.
   #
   # @param temporary_options [Hash] A hash of temporary configuration options.
   # @yield Executes the block with the temporary configuration.
   # @return [void]
   def self.with_config(temporary_options)
-    original_configuration = configuration.dup
-    self.configuration = temporary_options
+    original_configuration = configuration
+
+    self.configuration = original_configuration.dup.tap do |config|
+      temporary_options.each { |key, value| config.public_send(:"#{key}=", value) }
+    end
 
     yield
   ensure

@@ -41,12 +41,25 @@ end
 
 #### Using a Dynamic Configuration
 
+`with_config` temporarily applies options **on top of the currently active configuration** (per thread) and reverts when the block returns. The options you pass are merged over the active config, so you only need to specify what changes — credentials and other settings are inherited rather than reset to their defaults.
+
 ```ruby
 FulfilApi.with_config(
   access_token: FulfilApi::AccessToken.new(ENV["FULFIL_API_KEY"]),
   merchant_id: "the-id-of-the-merchant"
 ) do
   # Query the Fulfil API
+end
+```
+
+This makes it easy to use different settings in contexts with different constraints. For example, a web request bound by a 30s timeout can keep tight defaults globally, while a background job (which has more time) overrides just the timeouts and retries without re-passing credentials:
+
+```ruby
+FulfilApi.with_config(
+  request_options: { open_timeout: 5, read_timeout: 60, write_timeout: 30 },
+  connection_options: { max_retries: 3, idle_timeout: 10 }
+) do
+  # Long-running work against the Fulfil API
 end
 ```
 
