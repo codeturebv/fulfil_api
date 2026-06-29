@@ -60,7 +60,16 @@ The following configuration options are (currently) available throught both conf
 
 - `merchant_id` (`String`): The `merchant_id` is the subdomain that the Fulfil instance is hosted on. This configuration option is required to be able to query Fulfil's API endpoints.
 
-- `request_options` (`Hash`): The `request_options` are the configuration options for the HTTP client. See [https://lostisland.github.io/faraday/#/customization/request-options](https://lostisland.github.io/faraday/#/customization/request-options) in `faraday`.
+- `request_options` (`Hash`): The `request_options` are the per-request timeout options for the HTTP client. See [https://lostisland.github.io/faraday/#/customization/request-options](https://lostisland.github.io/faraday/#/customization/request-options) in `faraday`.
+
+> **NOTE:** With the persistent (keep-alive) adapter there is no single whole-request `timeout`; Faraday resolves `read_timeout`, `open_timeout`, and `write_timeout` independently. `read_timeout` is the value that governs a slow or stalled response.
+
+- `connection_options` (`Hash`): Tuning for the persistent (keep-alive) connection. Supported keys:
+  - `max_retries` (default `1`): Re-enables Ruby's built-in retry for **idempotent** requests (`GET`/`HEAD`/`PUT`/`DELETE`/`OPTIONS`). The `net_http_persistent` adapter disables this by forcing it to `0`, which makes a keep-alive socket the server has already dropped surface as a read timeout instead of being retried transparently on a fresh socket. `POST` is never auto-retried, so this is side-effect safe. Set to `0` to restore the adapter's default behaviour.
+  - `idle_timeout` (`Integer`, optional): Seconds a pooled socket may sit idle before it is recycled. Lower this towards your server's keep-alive window to shrink the stale-socket window for non-idempotent requests.
+  - `pool_size` (`Integer`, optional): Maximum number of concurrent connections kept in the pool.
+
+> **NOTE:** When retries are enabled, the worst-case time for a request is roughly `(max_retries + 1) × read_timeout`. On platforms with a hard request cap (e.g. Heroku's 30s router limit), keep `read_timeout` low enough that this product stays under the cap.
 
 ### Querying the Fulfil API
 

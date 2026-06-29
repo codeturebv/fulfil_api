@@ -189,5 +189,34 @@ module FulfilApi
 
       refute_includes @client.send(:connection_cache_key), @auth_token
     end
+
+    def test_restores_max_retries_on_the_persistent_connection_by_default
+      persistent = Net::HTTP::Persistent.new
+
+      @client.send(:configure_persistent_connection, persistent)
+
+      assert_equal 1, persistent.max_retries
+    end
+
+    def test_builds_separate_connections_for_different_connection_options
+      FulfilApi::TplClient.reset_connection_cache!
+
+      first_client = FulfilApi::TplClient.new(
+        FulfilApi::Configuration.new(
+          merchant_id: @merchant_id,
+          tpl: { auth_token: @auth_token },
+          connection_options: { idle_timeout: 2 }
+        )
+      )
+      second_client = FulfilApi::TplClient.new(
+        FulfilApi::Configuration.new(
+          merchant_id: @merchant_id,
+          tpl: { auth_token: @auth_token },
+          connection_options: { idle_timeout: 9 }
+        )
+      )
+
+      refute_same first_client.send(:connection), second_client.send(:connection)
+    end
   end
 end

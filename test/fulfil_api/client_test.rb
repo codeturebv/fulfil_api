@@ -251,6 +251,52 @@ module FulfilApi
       assert_requested :get, %r{sale\.sale/123}i, headers: { "X-Api-Key" => second_token.value }, times: 1
     end
 
+    def test_restores_max_retries_on_the_persistent_connection_by_default
+      persistent = Net::HTTP::Persistent.new
+
+      @client.send(:configure_persistent_connection, persistent)
+
+      assert_equal 1, persistent.max_retries
+    end
+
+    def test_applies_custom_idle_timeout_and_max_retries_to_the_persistent_connection
+      client = FulfilApi::Client.new(
+        FulfilApi::Configuration.new(
+          merchant_id: @merchant_id,
+          connection_options: { idle_timeout: 3, max_retries: 2 }
+        )
+      )
+      persistent = Net::HTTP::Persistent.new
+
+      client.send(:configure_persistent_connection, persistent)
+
+      assert_equal 3, persistent.idle_timeout
+      assert_equal 2, persistent.max_retries
+    end
+
+    def test_adapter_options_only_include_pool_size_when_configured
+      assert_empty @client.send(:adapter_options)
+
+      client = FulfilApi::Client.new(
+        FulfilApi::Configuration.new(merchant_id: @merchant_id, connection_options: { pool_size: 5 })
+      )
+
+      assert_equal({ pool_size: 5 }, client.send(:adapter_options))
+    end
+
+    def test_builds_separate_connections_for_different_connection_options
+      FulfilApi::Client.reset_connection_cache!
+
+      first_client = FulfilApi::Client.new(
+        FulfilApi::Configuration.new(merchant_id: @merchant_id, connection_options: { idle_timeout: 2 })
+      )
+      second_client = FulfilApi::Client.new(
+        FulfilApi::Configuration.new(merchant_id: @merchant_id, connection_options: { idle_timeout: 9 })
+      )
+
+      refute_same first_client.send(:connection), second_client.send(:connection)
+    end
+
     private
 
     def build_client(access_token)

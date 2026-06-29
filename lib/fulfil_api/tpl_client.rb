@@ -123,11 +123,10 @@ module FulfilApi
     #
     # @return [Faraday::Connection]
     def build_connection
-      Faraday.new(
-        url: api_endpoint,
-        request: configuration.request_options
-      ) do |connection|
-        connection.adapter :net_http_persistent
+      Faraday.new(url: api_endpoint, request: configuration.request_options) do |connection|
+        connection.adapter(:net_http_persistent, **adapter_options) do |http|
+          configure_persistent_connection(http)
+        end
 
         # Configuration of the request middleware
         connection.request :json
@@ -138,9 +137,40 @@ module FulfilApi
       end
     end
 
+    # Initialization options for the persistent adapter. Only `pool_size` is
+    #   accepted here; `idle_timeout` and `max_retries` are applied to the live
+    #   Net::HTTP::Persistent instance in {#configure_persistent_connection}.
+    #
+    # @return [Hash]
+    def adapter_options
+      options = {}
+      options[:pool_size] = configuration.connection_options[:pool_size] if configuration.connection_options[:pool_size]
+      options
+    end
+
+    # Tunes the underlying Net::HTTP::Persistent connection.
+    #
+    # The `net_http_persistent` adapter forces `max_retries` to 0 on every
+    #   request, which disables Ruby's built-in retry for idempotent requests.
+    #   Restoring it lets a stale keep-alive socket — one the server has already
+    #   closed — be retried transparently on a fresh socket instead of surfacing
+    #   as a read timeout. The config block runs after the adapter zeroes the
+    #   value, so this takes effect.
+    #
+    # @param http [Net::HTTP::Persistent] The live persistent connection.
+    # @return [void]
+    def configure_persistent_connection(http)
+      if configuration.connection_options[:idle_timeout]
+        http.idle_timeout = configuration.connection_options[:idle_timeout]
+      end
+      return if configuration.connection_options[:max_retries].nil?
+
+      http.max_retries = configuration.connection_options[:max_retries]
+    end
+
     # @return [Array] The cache key identifying a unique connection.
     def connection_cache_key
-      [merchant_id, api_version, configuration.request_options]
+      [merchant_id, api_version, configuration.request_options, configuration.connection_options]
     end
 
     # @param relative_path [String] The relative path to the API endpoint.

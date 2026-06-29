@@ -18,6 +18,27 @@ module FulfilApi
       assert_nil @config.merchant_id
       assert_nil @config.tpl
       assert_equal Configuration::DEFAULT_REQUEST_OPTIONS, @config.request_options
+      assert_equal Configuration::DEFAULT_CONNECTION_OPTIONS, @config.connection_options
+    end
+
+    def test_connection_options_merge_over_defaults
+      config = FulfilApi::Configuration.new(connection_options: { idle_timeout: 2 })
+
+      assert_equal 2, config.connection_options[:idle_timeout]
+      assert_equal 1, config.connection_options[:max_retries]
+    end
+
+    def test_connection_options_allow_overriding_defaults
+      config = FulfilApi::Configuration.new(connection_options: { max_retries: 0 })
+
+      assert_equal 0, config.connection_options[:max_retries]
+    end
+
+    def test_connection_options_reset_to_defaults_when_assigned_nil
+      config = FulfilApi::Configuration.new(connection_options: { pool_size: 5 })
+      config.connection_options = nil
+
+      assert_equal Configuration::DEFAULT_CONNECTION_OPTIONS, config.connection_options
     end
 
     def test_initialize_with_custom_options
