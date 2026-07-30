@@ -191,6 +191,21 @@ FulfilApi::Installation.global.sole.with_config do |client|
 end
 ```
 
+#### Handling a dead token
+
+When Fulfil rejects the credentials a request was made with, the client raises `FulfilApi::UnauthorizedError` instead of the generic `FulfilApi::Error`. It is a subclass, so existing `rescue FulfilApi::Error` still catches it — but naming it lets you separate "these credentials are gone" from "something else went wrong".
+
+That distinction matters most in background jobs, where retrying a revoked token just burns a queue slot until the backoff gives up:
+
+```ruby
+class SynchronizationJob < ApplicationJob
+  discard_on FulfilApi::UnauthorizedError
+  retry_on FulfilApi::Error, wait: :polynomially_longer
+end
+```
+
+A `403` deliberately does not raise it. Fulfil answers `403` both for a token that lacks a scope and for an action its business rules refuse, so treating them alike would tell merchants to reconnect a perfectly good token.
+
 ### Querying the Fulfil API
 
 > **NOTE:** Currently, the gem is under heavy development. The querying interface of the gem is really basic at the moment. In the future, we will closer match the querying interface of `ActiveRecord`.
