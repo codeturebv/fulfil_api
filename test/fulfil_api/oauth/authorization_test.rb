@@ -15,8 +15,8 @@ module FulfilApi
         }
       end
 
-      def authorization(**options)
-        Authorization.new(configuration: @configuration, **options)
+      def authorization(**)
+        Authorization.new(configuration: @configuration, **)
       end
 
       def test_generates_a_unique_state

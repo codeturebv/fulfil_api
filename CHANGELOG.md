@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Require Rails 8.0 and Ruby 3.2 or newer. Every application using the gem is on Rails 8 already, so carrying support for older versions bought nothing.
+
 - Add support for Fulfil's OAuth 2.0 authorization flow, so applications no longer depend on personal access tokens now that Fulfil caps their lifetime. `FulfilApi::OAuth::Authorization` builds the consent screen URL and exchanges the authorization code for a token, and `config.oauth` holds the OAuth app's credentials.
 - Ship the flow as a Rails engine that is only loaded inside a Rails application. `bin/rails generate fulfil_api:install` writes the initializer, adds the migration for `FulfilApi::Installation`, and mounts the engine. Installing changes nothing about how an application behaves until `config.oauth.parent_controller` names the controller the flow runs under, so an application still on personal access tokens can move to OAuth in its own time. There is no default: the engine's controllers inherit from it, and guessing wrong leaves an endpoint a stranger can use to record their own Fulfil workspace over the application's.
 - Add the `FulfilApi::Authenticated` controller concern, which runs every action with a client authenticated as the current installation and sends a user without a usable token through the OAuth flow.
