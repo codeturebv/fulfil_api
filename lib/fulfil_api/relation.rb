@@ -48,8 +48,8 @@ module FulfilApi
     #
     # @yield [resource] Yields each resource object to the given block.
     # @return [Enumerator, self] Returns an Enumerator if no block is given; otherwise, returns self.
-    def each(&block)
-      all.each(&block)
+    def each(&)
+      all.each(&)
     end
 
     # Resets any of the previously provided query conditions.
