@@ -95,6 +95,26 @@ module FulfilApi
       end
     end
 
+    test "an installation carrying neither token is invalid" do
+      assert_not Installation.new(merchant_id: "acme").valid?
+    end
+
+    test "an installation carrying only a permanent token is valid" do
+      assert_predicate Installation.new(merchant_id: "acme", offline_access_token: "bot-1234"), :valid?
+    end
+
+    test "an installation carrying only a short lived token is valid" do
+      assert_predicate Installation.new(merchant_id: "acme", access_token: "user-1234"), :valid?
+    end
+
+    test "the token type and scopes are recorded even when Fulfil leaves them out" do
+      Installation.install token(scope: nil, token_type: nil), merchant_id: "acme"
+      installation = Installation.global.sole
+
+      assert_equal FulfilApi::OAuth::Token::DEFAULT_TOKEN_TYPE, installation.token_type
+      assert_empty installation.scopes
+    end
+
     test "installed_on finds the application wide installation" do
       installation = Installation.install token, merchant_id: "acme"
 
