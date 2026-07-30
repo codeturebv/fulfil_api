@@ -8,12 +8,26 @@ class CreateFulfilApiInstallations < ActiveRecord::Migration<%= migration_versio
 
       t.string :merchant_id, null: false
 
+      # Fulfil grants the permanent token only in `offline_access` mode, and the
+      #   short-lived one is the only token in `user_session` mode. Neither is
+      #   required on its own; FulfilApi::Installation requires one of the two.
       t.text :access_token
       t.text :offline_access_token
-      t.string :token_type
+
+      # The gem fills the token type in rather than relying on Fulfil to send it.
+      t.string :token_type, null: false, default: "Bearer"
+
+      # Nullable because Active Record serialization writes an empty list as
+      #   NULL and reads it back as one, so the column is never meaningfully
+      #   blank even though it can be NULL.
       t.text :scopes
+
+      # Describes the short-lived token only. A permanent token has no expiry:
+      #   it is revoked by uninstalling the app, not by time.
       t.datetime :expires_at
 
+      # Who walked through the authorization flow. Recorded for support, nothing
+      #   in the gem depends on it, and Fulfil is free to leave parts of it out.
       t.integer :associated_user_id
       t.string :associated_user_email
       t.string :associated_user_name

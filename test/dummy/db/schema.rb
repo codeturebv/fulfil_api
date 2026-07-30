@@ -8,7 +8,7 @@ ActiveRecord::Schema[7.2].define(version: 1) do
 
     t.text :access_token
     t.text :offline_access_token
-    t.string :token_type
+    t.string :token_type, null: false, default: "Bearer"
     t.text :scopes
     t.datetime :expires_at
 
