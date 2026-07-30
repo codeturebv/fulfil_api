@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "A Ruby HTTP client to interact with the API endpoints of Fulfil.io"
   spec.homepage = "https://www.github.com/codeturebv/fulfil_api"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.0.0"
+  spec.required_ruby_version = ">= 3.1.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://www.github.com/codeturebv/fulfil_api"
@@ -27,6 +27,15 @@ Gem::Specification.new do |spec|
         f.start_with?(*%w[bin/ test/ spec/ features/ .git .github appveyor Gemfile])
     end
   end
+
+  spec.post_install_message = <<~MESSAGE
+    Using fulfil_api in a Rails application? Run the install generator to set up
+    Fulfil's OAuth flow, then run the migration it adds:
+
+      bin/rails generate fulfil_api:install
+      bin/rails db:migrate
+
+  MESSAGE
 
   spec.bindir = "exe"
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
