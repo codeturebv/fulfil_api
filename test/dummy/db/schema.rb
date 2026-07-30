@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-ActiveRecord::Schema[7.2].define(version: 1) do
+ActiveRecord::Schema[8.0].define(version: 1) do
   create_table :fulfil_api_installations, force: true do |t|
     t.references :owner, polymorphic: true, null: true, index: false
 

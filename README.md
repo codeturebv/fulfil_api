@@ -92,6 +92,8 @@ Fulfil caps the lifetime of personal access tokens, so an application that has t
 
 The Rails parts of the gem only load when the gem is used from within a Rails application. Everywhere else, `fulfil_api` stays the plain HTTP client it has always been.
 
+> **NOTE:** The engine requires Rails 8.0 or newer.
+
 #### Setting it up
 
 1. Create an app in Fulfil's [authentication dashboard](https://auth.fulfil.io/user/clients) and whitelist `https://your-app.example.com/fulfil/callback` as a redirection URL.

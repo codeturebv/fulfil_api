@@ -10,7 +10,7 @@ AllCops:
     - tmp/**/*
     - vendor/**/*
   NewCops: enable
-  TargetRubyVersion: 3.1
+  TargetRubyVersion: 3.2
 
 Layout/LineLength:
   Exclude:
@@ -35,3 +35,9 @@ Style/StringLiterals:
 
 Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
+
+Style/ArgumentsForwarding:
+  # The test helper is a documented, public API. Anonymous forwarding would hide
+  #   the keyword arguments it accepts from both the reader and its YARD docs.
+  Exclude:
+    - lib/fulfil_api/test_helper.rb

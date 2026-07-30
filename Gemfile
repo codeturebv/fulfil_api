@@ -20,5 +20,5 @@ gem "webmock", "~> 3.23" # WebMock allows stubbing HTTP requests and setting exp
 # Rails is an optional dependency of the gem. It is only required to develop and
 #   test the Rails-specific parts of the gem (the engine, its models, and its
 #   controllers).
-gem "rails", "~> 7.2" # Full-stack web application framework. [https://github.com/rails/rails]
+gem "rails", "~> 8.0" # Full-stack web application framework. [https://github.com/rails/rails]
 gem "sqlite3", "~> 2.0" # Ruby bindings for the SQLite3 embedded database. [https://github.com/sparklemotion/sqlite3-ruby]
