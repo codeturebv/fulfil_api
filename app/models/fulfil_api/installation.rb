@@ -23,6 +23,12 @@ module FulfilApi
     validates :merchant_id, presence: true
     validates :owner_id, uniqueness: { message: "is already connected to a Fulfil workspace", scope: :owner_type }
 
+    # Which of the two tokens is granted depends on the access mode, so neither
+    #   column can be required on its own. An installation carrying neither is
+    #   not an installation: it authenticates nothing, and {#usable?} would send
+    #   the user back through the flow forever.
+    validates :access_token, presence: { message: "or an offline access token has to be present" }, unless: :offline?
+
     scope :global, -> { where(owner: nil) }
 
     serialize :scopes, coder: JSON, type: Array
