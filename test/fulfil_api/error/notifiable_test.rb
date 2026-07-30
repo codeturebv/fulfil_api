@@ -121,11 +121,11 @@ module FulfilApi
       #   runs, and unsubscribes again afterwards.
       #
       # @return [Array<ActiveSupport::Notifications::Event>]
-      def capture_error_events(&block)
+      def capture_error_events(&)
         events = []
         collect = ->(event) { events << event }
 
-        ActiveSupport::Notifications.subscribed(collect, FulfilApi::Error::EVENT_NAME, &block)
+        ActiveSupport::Notifications.subscribed(collect, FulfilApi::Error::EVENT_NAME, &)
 
         events
       end

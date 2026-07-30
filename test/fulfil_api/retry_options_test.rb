@@ -105,8 +105,8 @@ module FulfilApi
 
     private
 
-    def build_client(**options)
-      FulfilApi::Client.new(FulfilApi::Configuration.new(merchant_id: @merchant_id, **options))
+    def build_client(**)
+      FulfilApi::Client.new(FulfilApi::Configuration.new(merchant_id: @merchant_id, **))
     end
   end
 end
