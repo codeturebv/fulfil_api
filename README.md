@@ -84,6 +84,107 @@ The following configuration options are (currently) available throught both conf
 
 > **NOTE:** When retries are enabled, the worst-case time for a request is roughly `(max_retries + 1) × read_timeout`. On platforms with a hard request cap (e.g. Heroku's 30s router limit), keep `read_timeout` low enough that this product stays under the cap.
 
+- `oauth` (`FulfilApi::OAuth::Configuration`): The credentials and options of the OAuth app used by the [OAuth flow](#authenticating-with-oauth-rails). Assign it a `Hash`, or set its options one by one on `config.oauth`.
+
+### Authenticating with OAuth (Rails)
+
+Fulfil caps the lifetime of personal access tokens, so an application that has to keep working unattended needs an OAuth token instead. The gem ships the whole flow as a Rails engine: a user is sent to Fulfil's consent screen, comes back with an authorization code, and the resulting token is stored as a `FulfilApi::Installation`.
+
+The Rails parts of the gem only load when the gem is used from within a Rails application. Everywhere else, `fulfil_api` stays the plain HTTP client it has always been.
+
+#### Setting it up
+
+1. Create an app in Fulfil's [authentication dashboard](https://auth.fulfil.io/user/clients) and whitelist `https://your-app.example.com/fulfil/callback` as a redirection URL.
+2. Run the install generator and its migration:
+
+```shell
+  $ bin/rails generate fulfil_api:install
+  $ bin/rails db:migrate
+```
+
+The generator writes `config/initializers/fulfil_api.rb`, adds the migration for the `fulfil_api_installations` table, and mounts the engine at `/fulfil`.
+
+3. Fill in the app's credentials:
+
+```ruby
+# config/initializers/fulfil_api.rb
+
+FulfilApi.configure do |config|
+  config.merchant_id = ENV.fetch("FULFIL_MERCHANT_ID", nil)
+
+  config.oauth.client_id = ENV.fetch("FULFIL_OAUTH_CLIENT_ID", nil)
+  config.oauth.client_secret = ENV.fetch("FULFIL_OAUTH_CLIENT_SECRET", nil)
+  config.oauth.scopes = %w[sale.sale]
+end
+```
+
+> **NOTE:** The access tokens are encrypted at rest with Active Record Encryption. Run `bin/rails db:encryption:init` and store the keys in your credentials if the application does not use it yet.
+
+#### Available OAuth options
+
+- `client_id` / `client_secret` (`String`): The app's credentials, found under **App Credentials** in Fulfil's authentication dashboard.
+- `scopes` (`Array<String>`, default `[]`): The scopes to request. See [https://developers.fulfil.io](https://developers.fulfil.io) for the full list.
+- `access_type` (`Symbol`, default `:offline_access`): `:offline_access` grants a permanent token that keeps working when no user is around, which is what background jobs need. `:user_session` grants a token that expires with the user's Fulfil session. Fulfil has no refresh token, so an expired `:user_session` token can only be replaced by walking through the flow again.
+- `after_install_path` (`String` or callable, default `"/"`): Where the user ends up after installing the app, unless they were sent to the flow from somewhere else. A callable receives the `FulfilApi::Installation` that was created.
+- `parent_controller` (`String`, default `"ApplicationController"`): The controller the engine's own controllers inherit from, so the flow picks up the application's layout, authentication, and multi-tenancy.
+- `redirect_uri` (`String`, optional): Defaults to the engine's callback URL, derived from the incoming request. Set it when the application sits behind a proxy that rewrites the host.
+
+#### Kicking off the flow automatically
+
+Include `FulfilApi::Authenticated` in a controller. Every action then runs with a client authenticated as the current installation, and a user without a usable token is sent through the flow and returned to where they were headed.
+
+```ruby
+class SalesOrdersController < ApplicationController
+  include FulfilApi::Authenticated
+
+  def index
+    @sales_orders = FulfilApi::Resource.set(model_name: "sale.sale").limit(50)
+  end
+end
+```
+
+#### One installation per tenant
+
+By default the installation belongs to the application as a whole, which is what an application built for a single merchant needs. An application serving many merchants ties the installation to a record instead:
+
+```ruby
+class Shop < ApplicationRecord
+  include FulfilApi::Installable
+end
+```
+
+Point the flow at the current tenant by overriding two methods in `ApplicationController`:
+
+```ruby
+class ApplicationController < ActionController::Base
+  private
+
+  def fulfil_installation_owner
+    Current.shop
+  end
+
+  def fulfil_merchant_id
+    Current.shop.fulfil_merchant_id
+  end
+end
+```
+
+Outside of a request — in a background job, for instance — go through the record:
+
+```ruby
+shop.with_fulfil_config do |client|
+  client.get("model/sale.sale")
+end
+```
+
+`FulfilApi::Installation` is a plain Active Record model, so an application-wide token works the same way:
+
+```ruby
+FulfilApi::Installation.global.sole.with_config do |client|
+  client.get("model/sale.sale")
+end
+```
+
 ### Querying the Fulfil API
 
 > **NOTE:** Currently, the gem is under heavy development. The querying interface of the gem is really basic at the moment. In the future, we will closer match the querying interface of `ActiveRecord`.

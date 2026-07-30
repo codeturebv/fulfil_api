@@ -121,6 +121,45 @@ module FulfilApi
       assert_equal 5, FulfilApi.configuration.request_options[:read_timeout]
     end
 
+    def test_oauth_configuration_defaults_to_an_unconfigured_app
+      config = FulfilApi::Configuration.new
+
+      assert_instance_of FulfilApi::OAuth::Configuration, config.oauth
+      refute_predicate config.oauth, :configured?
+    end
+
+    def test_oauth_configuration_assignment_from_a_hash
+      config = FulfilApi::Configuration.new(oauth: { client_id: "id", client_secret: "secret" })
+
+      assert_predicate config.oauth, :configured?
+    end
+
+    def test_oauth_configuration_assignment_rejects_unsupported_values
+      assert_raises ArgumentError do
+        FulfilApi::Configuration.new(oauth: "client-id")
+      end
+    end
+
+    def test_oauth_configuration_through_the_configure_block
+      FulfilApi.configure do |config|
+        config.oauth.client_id = "id"
+        config.oauth.scopes = %w[sale.sale]
+      end
+
+      assert_equal "id", FulfilApi.configuration.oauth.client_id
+      assert_equal %w[sale.sale], FulfilApi.configuration.oauth.scopes
+    end
+
+    def test_with_config_does_not_leak_oauth_changes_into_the_active_configuration
+      FulfilApi.configure { |config| config.oauth = { client_id: "id", client_secret: "secret" } }
+
+      FulfilApi.with_config(merchant_id: "temporary") do
+        FulfilApi.configuration.oauth.client_id = "another-id"
+      end
+
+      assert_equal "id", FulfilApi.configuration.oauth.client_id
+    end
+
     def test_tpl_configuration
       FulfilApi.configure do |config|
         config.merchant_id = "codeture"

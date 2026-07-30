@@ -3,7 +3,10 @@
 require "zeitwerk"
 
 loader = Zeitwerk::Loader.for_gem
+loader.inflector.inflect("oauth" => "OAuth")
+loader.ignore("#{__dir__}/fulfil_api/engine.rb")
 loader.ignore("#{__dir__}/fulfil_api/test_helper.rb")
+loader.ignore("#{__dir__}/generators")
 loader.setup
 
 require "active_support"
@@ -17,3 +20,8 @@ module FulfilApi
 end
 
 loader.eager_load
+
+# The Rails-specific parts of the gem — the engine, its models, its controllers,
+#   and its generators — are only loaded when the gem is used from within a
+#   Rails application.
+require "fulfil_api/engine" if defined?(Rails::Engine)
