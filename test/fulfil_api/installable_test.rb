@@ -48,7 +48,7 @@ module FulfilApi
       end
     end
 
-    test "destroying the record takes its installations with it" do
+    test "destroying the record takes its installation with it" do
       Installation.install token, merchant_id: "other", owner: @shop
 
       assert_difference -> { Installation.count }, -1 do

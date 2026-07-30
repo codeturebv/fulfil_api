@@ -19,8 +19,7 @@ ActiveRecord::Schema[7.2].define(version: 1) do
     t.timestamps
   end
 
-  add_index :fulfil_api_installations, %i[owner_type owner_id merchant_id],
-            name: "index_fulfil_api_installations_on_owner_and_merchant", unique: true
+  add_index :fulfil_api_installations, %i[owner_type owner_id], unique: true
 
   create_table :shops, force: true do |t|
     t.string :name

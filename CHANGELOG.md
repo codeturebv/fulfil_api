@@ -3,7 +3,7 @@
 - Add support for Fulfil's OAuth 2.0 authorization flow, so applications no longer depend on personal access tokens now that Fulfil caps their lifetime. `FulfilApi::OAuth::Authorization` builds the consent screen URL and exchanges the authorization code for a token, and `config.oauth` holds the OAuth app's credentials.
 - Ship the flow as a Rails engine that is only loaded inside a Rails application. `bin/rails generate fulfil_api:install` writes the initializer, adds the migration for `FulfilApi::Installation`, and mounts the engine.
 - Add the `FulfilApi::Authenticated` controller concern, which runs every action with a client authenticated as the current installation and sends a user without a usable token through the OAuth flow.
-- Add the `FulfilApi::Installable` model concern, so an application serving many merchants can keep one installation per record instead of one for the whole application.
+- Add the `FulfilApi::Installable` model concern, so an application serving many merchants can keep one installation per record instead of one for the whole application. A record is connected to a single Fulfil workspace.
 
 - Re-enable Ruby's built-in retry for idempotent requests on the persistent connection, which the `net_http_persistent` adapter disables by forcing `max_retries` to `0`. This recovers stale keep-alive sockets transparently instead of surfacing them as read timeouts.
 - Add a `connection_options` configuration option to tune the persistent connection (`max_retries`, `idle_timeout`, `pool_size`).

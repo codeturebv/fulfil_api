@@ -153,6 +153,8 @@ class Shop < ApplicationRecord
 end
 ```
 
+A record is connected to a single Fulfil workspace. Installing it on another one replaces what came before rather than leaving the record connected to two, and drops the token the previous workspace granted.
+
 Point the flow at the current tenant by overriding two methods in `ApplicationController`:
 
 ```ruby

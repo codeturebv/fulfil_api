@@ -21,10 +21,9 @@ class CreateFulfilApiInstallations < ActiveRecord::Migration<%= migration_versio
       t.timestamps
     end
 
-    # Databases treat NULLs as distinct, so this index does not constrain the
-    #   application-wide installation. FulfilApi::Installation validates the
-    #   uniqueness of the merchant for that case.
-    add_index :fulfil_api_installations, %i[owner_type owner_id merchant_id],
-              name: "index_fulfil_api_installations_on_owner_and_merchant", unique: true
+    # An owner is connected to a single Fulfil workspace. Databases treat NULLs
+    #   as distinct, so this index does not constrain the application-wide
+    #   installation; FulfilApi::Installation validates that case.
+    add_index :fulfil_api_installations, %i[owner_type owner_id], unique: true
   end
 end
