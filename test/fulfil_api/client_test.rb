@@ -48,6 +48,36 @@ module FulfilApi
       assert_requested :get, /#{version_number}/i
     end
 
+    def test_raises_an_unauthorized_error_when_fulfil_rejects_the_credentials
+      stub_fulfil_request(:get, status: 401, response: { error: "invalid token" })
+
+      error =
+        assert_raises FulfilApi::UnauthorizedError do
+          @client.get("sale.sale/123")
+        end
+
+      assert_equal 401, error.details[:response_status]
+    end
+
+    def test_an_unauthorized_error_is_still_rescued_as_a_generic_error
+      stub_fulfil_request(:get, status: 401, response: { error: "invalid token" })
+
+      assert_raises FulfilApi::Error do
+        @client.get("sale.sale/123")
+      end
+    end
+
+    def test_a_forbidden_response_does_not_raise_an_unauthorized_error
+      stub_fulfil_request(:get, status: 403, response: { error: "not allowed" })
+
+      error =
+        assert_raises FulfilApi::Error do
+          @client.get("sale.sale/123")
+        end
+
+      refute_instance_of FulfilApi::UnauthorizedError, error
+    end
+
     def test_reraising_of_http_errors
       stub_fulfil_request(:get, status: 422, response: { error: "something went wrong" })
 

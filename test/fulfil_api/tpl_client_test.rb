@@ -144,6 +144,17 @@ module FulfilApi
       end
     end
 
+    def test_raises_an_unauthorized_error_when_fulfil_rejects_the_credentials
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers", status: 401, response: { error: "invalid token" })
+
+      error =
+        assert_raises FulfilApi::UnauthorizedError do
+          @client.get("inbound-transfers")
+        end
+
+      assert_equal 401, error.details[:response_status]
+    end
+
     def test_reraising_of_http_errors
       stub_fulfil_tpl_request(:get, path: "inbound-transfers", status: 422, response: { error: "something went wrong" })
 
