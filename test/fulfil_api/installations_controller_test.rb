@@ -51,6 +51,25 @@ module FulfilApi
       end
     end
 
+    test "the flow refuses to run before the application named a parent controller" do
+      FulfilApi.configuration.oauth.parent_controller = nil
+
+      assert_raises OAuth::ConfigurationError do
+        get "/fulfil/installation/new"
+      end
+    end
+
+    test "the callback refuses to run before the application named a parent controller" do
+      install
+      FulfilApi.configuration.oauth.parent_controller = nil
+
+      assert_no_difference -> { Installation.count } do
+        assert_raises OAuth::ConfigurationError do
+          get "/fulfil/callback", params: { code: "the-code", state: "a-nonce" }
+        end
+      end
+    end
+
     test "the callback records the installation" do
       assert_difference -> { Installation.count }, +1 do
         install

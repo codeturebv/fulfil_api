@@ -102,9 +102,9 @@ The Rails parts of the gem only load when the gem is used from within a Rails ap
   $ bin/rails db:migrate
 ```
 
-The generator writes `config/initializers/fulfil_api.rb`, adds the migration for the `fulfil_api_installations` table, and mounts the engine at `/fulfil`.
+The generator writes `config/initializers/fulfil_api.rb`, adds the migration for the `fulfil_api_installations` table, and mounts the engine at `/fulfil`. None of that changes how the application behaves: the routes have no callers, and the flow refuses to run until step 3 below. An application still on personal access tokens can install the gem and move to OAuth later.
 
-3. Fill in the app's credentials:
+3. Fill in the app's credentials, and name the controller the flow runs under:
 
 ```ruby
 # config/initializers/fulfil_api.rb
@@ -115,8 +115,12 @@ FulfilApi.configure do |config|
   config.oauth.client_id = ENV.fetch("FULFIL_OAUTH_CLIENT_ID", nil)
   config.oauth.client_secret = ENV.fetch("FULFIL_OAUTH_CLIENT_SECRET", nil)
   config.oauth.scopes = %w[sale.sale]
+
+  config.oauth.parent_controller = "AuthenticatedController"
 end
 ```
+
+> **NOTE:** `parent_controller` has no default on purpose. The engine's controllers inherit from it, so it has to be a controller that authenticates the request — and, in an application serving many merchants, one that establishes the current tenant. An unauthenticated flow lets a stranger walk through it and record their own Fulfil workspace over yours; a flow outside the application's tenancy records installations against the wrong owner. Until it is set, the flow raises `FulfilApi::OAuth::ConfigurationError`.
 
 > **NOTE:** The access tokens are encrypted at rest with Active Record Encryption. Run `bin/rails db:encryption:init` and store the keys in your credentials if the application does not use it yet.
 
@@ -126,7 +130,7 @@ end
 - `scopes` (`Array<String>`, default `[]`): The scopes to request. See [https://developers.fulfil.io](https://developers.fulfil.io) for the full list.
 - `access_type` (`Symbol`, default `:offline_access`): `:offline_access` grants a permanent token that keeps working when no user is around, which is what background jobs need. `:user_session` grants a token that expires with the user's Fulfil session. Fulfil has no refresh token, so an expired `:user_session` token can only be replaced by walking through the flow again.
 - `after_install_path` (`String` or callable, default `"/"`): Where the user ends up after installing the app, unless they were sent to the flow from somewhere else. A callable receives the `FulfilApi::Installation` that was created.
-- `parent_controller` (`String`, default `"ApplicationController"`): The controller the engine's own controllers inherit from, so the flow picks up the application's layout, authentication, and multi-tenancy.
+- `parent_controller` (`String`, **required**): The controller the engine's own controllers inherit from, so the flow picks up the application's authentication, layout, and multi-tenancy. No default — see the note above.
 - `redirect_uri` (`String`, optional): Defaults to the engine's callback URL, derived from the incoming request. Set it when the application sits behind a proxy that rewrites the host.
 
 #### Kicking off the flow automatically

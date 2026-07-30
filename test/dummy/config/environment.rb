@@ -33,6 +33,9 @@ FulfilApi.configure do |config|
   config.oauth.client_id = "client-id"
   config.oauth.client_secret = "client-secret"
   config.oauth.scopes = %w[sale.sale]
+
+  # A host application has to name this itself; the engine has no default.
+  config.oauth.parent_controller = "ApplicationController"
 end
 
 # The configuration every test starts from. Tests that replace the active
