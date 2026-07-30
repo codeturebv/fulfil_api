@@ -10,9 +10,26 @@ module FulfilApi
 
         assert_equal Configuration::DEFAULT_ACCESS_TYPE, config.access_type
         assert_equal Configuration::DEFAULT_AFTER_INSTALL_PATH, config.after_install_path
-        assert_equal Configuration::DEFAULT_PARENT_CONTROLLER, config.parent_controller
         assert_empty config.scopes
         assert_nil config.client_id
+      end
+
+      def test_the_parent_controller_is_not_guessed_for_the_application
+        config = Configuration.new
+
+        assert_nil config.parent_controller
+        refute_predicate config, :parent_controller_configured?
+      end
+
+      def test_the_engine_falls_back_to_a_controller_without_authentication
+        assert_equal Configuration::UNCONFIGURED_PARENT_CONTROLLER, Configuration.new.parent_controller_class.name
+      end
+
+      def test_the_parent_controller_class_follows_the_configured_name
+        config = Configuration.new(parent_controller: "ApplicationController")
+
+        assert_equal ::ApplicationController, config.parent_controller_class
+        assert_predicate config, :parent_controller_configured?
       end
 
       def test_configured_requires_a_client_id_and_secret

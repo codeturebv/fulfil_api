@@ -23,9 +23,14 @@ FulfilApi.configure do |config|
   #   FulfilApi::Installation that was created.
   config.oauth.after_install_path = "/"
 
-  # The controller the engine's own controllers inherit from, so the OAuth flow
-  #   picks up the application's layout, authentication, and multi-tenancy.
-  config.oauth.parent_controller = "ApplicationController"
+  # REQUIRED before the OAuth flow can be used. The engine's controllers inherit
+  #   from this one, so it has to be a controller that authenticates the request
+  #   and — in an application serving many merchants — establishes the current
+  #   tenant. There is deliberately no default: an unauthenticated flow lets a
+  #   stranger record their own Fulfil workspace over yours, and a flow outside
+  #   the application's tenancy records installations against the wrong owner.
+  #
+  # config.oauth.parent_controller = "AuthenticatedController"
 
   # Fulfil requires the redirect URL to be whitelisted on the app. It defaults
   #   to the engine's callback URL, which is derived from the incoming request.

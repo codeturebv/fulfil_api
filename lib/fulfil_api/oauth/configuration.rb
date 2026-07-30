@@ -17,8 +17,12 @@ module FulfilApi
       DEFAULT_ACCESS_TYPE = :offline_access
       DEFAULT_AFTER_INSTALL_PATH = "/"
       DEFAULT_MOUNT_PATH = "/fulfil"
-      DEFAULT_PARENT_CONTROLLER = "ApplicationController"
       DEFAULT_SCOPES = [].freeze
+
+      # What the engine's controllers inherit from until {#parent_controller} is
+      #   set. It carries no authentication, which is why the flow refuses to run
+      #   before an application has named a controller of its own.
+      UNCONFIGURED_PARENT_CONTROLLER = "ActionController::Base"
 
       attr_accessor :after_install_path, :client_id, :client_secret, :parent_controller, :redirect_uri
       attr_reader :access_type, :scopes
@@ -53,6 +57,25 @@ module FulfilApi
         access_type == :offline_access
       end
 
+      # The class the engine's controllers inherit from.
+      #
+      # @return [Class]
+      def parent_controller_class
+        (parent_controller.presence || UNCONFIGURED_PARENT_CONTROLLER).constantize
+      end
+
+      # Whether the application named the controller the OAuth flow runs under.
+      #
+      # There is no sensible default: the flow has to run behind whatever the
+      #   application uses to authenticate a request, and guessing wrong leaves
+      #   an endpoint that lets a stranger install their own Fulfil workspace
+      #   over the application's.
+      #
+      # @return [true, false]
+      def parent_controller_configured?
+        parent_controller.present?
+      end
+
       # @param value [Array<String>, String, nil] A list of scopes, or a comma
       #   separated string of scopes.
       # @return [void]
@@ -66,7 +89,6 @@ module FulfilApi
       def set_default_options
         self.access_type = DEFAULT_ACCESS_TYPE if access_type.nil?
         self.after_install_path = DEFAULT_AFTER_INSTALL_PATH if after_install_path.nil?
-        self.parent_controller = DEFAULT_PARENT_CONTROLLER if parent_controller.nil?
         self.scopes = DEFAULT_SCOPES if scopes.nil?
       end
     end
