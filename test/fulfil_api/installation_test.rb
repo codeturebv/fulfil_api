@@ -62,11 +62,37 @@ module FulfilApi
       assert_equal "acme", Installation.sole.merchant_id
     end
 
-    test "the same workspace cannot be installed twice for the same owner" do
-      Installation.install token, merchant_id: "acme"
-      duplicate = Installation.new(merchant_id: "acme", access_token: "user-1234")
+    test "an owner cannot be connected to a second workspace" do
+      shop = Shop.create!(name: "Acme")
+      Installation.install token, merchant_id: "acme", owner: shop
+      second = Installation.new(merchant_id: "other", owner: shop, access_token: "user-1234")
 
-      assert_not duplicate.valid?
+      assert_not second.valid?
+    end
+
+    test "the application cannot be connected to a second workspace" do
+      Installation.install token, merchant_id: "acme"
+      second = Installation.new(merchant_id: "other", access_token: "user-1234")
+
+      assert_not second.valid?
+    end
+
+    test "install moves an owner to another workspace instead of adding one" do
+      Installation.install token, merchant_id: "acme"
+
+      assert_no_difference -> { Installation.count } do
+        Installation.install token, merchant_id: "other"
+      end
+
+      assert_equal "other", Installation.global.sole.merchant_id
+    end
+
+    test "install drops the permanent token granted by the workspace it moves away from" do
+      Installation.install token, merchant_id: "acme"
+
+      assert_changes -> { Installation.global.sole.offline_access_token }, from: "bot-1234", to: nil do
+        Installation.install token(offline_access_token: nil), merchant_id: "other"
+      end
     end
 
     test "installed_on finds the application wide installation" do

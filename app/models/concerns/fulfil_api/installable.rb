@@ -3,7 +3,8 @@
 module FulfilApi
   # Gives a record its own Fulfil installation, so an application that serves
   #   many merchants can keep one access token per tenant instead of one for the
-  #   whole application.
+  #   whole application. A record is connected to a single Fulfil workspace:
+  #   installing on another one replaces what came before.
   #
   # @example
   #   class Shop < ApplicationRecord
@@ -21,22 +22,12 @@ module FulfilApi
     extend ActiveSupport::Concern
 
     included do
-      has_many :fulfil_installations, as: :owner, class_name: "FulfilApi::Installation", dependent: :destroy
+      has_one :fulfil_installation, as: :owner, class_name: "FulfilApi::Installation", dependent: :destroy
     end
 
     # @return [true, false] Whether the record can talk to the Fulfil API.
     def fulfil_installed?
       fulfil_installation&.usable? || false
-    end
-
-    # The installation to authenticate this record's Fulfil API requests with.
-    #
-    # Defaults to the record's only installation. Override this when a record
-    #   holds installations on more than one Fulfil workspace.
-    #
-    # @return [FulfilApi::Installation, nil]
-    def fulfil_installation
-      fulfil_installations.first
     end
 
     # Runs a block against the Fulfil API as this record.
