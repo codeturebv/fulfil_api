@@ -9,6 +9,9 @@ module FulfilApi
   #   is what a Rails application built for a single merchant needs. Assigning an
   #   owner scopes the installation to a record instead, which is what an
   #   application serving many merchants needs — see {FulfilApi::Installable}.
+  #
+  # An owner has at most one installation, so a record is always tied to a single
+  #   Fulfil workspace. The same holds for the application-wide installation.
   class Installation < ActiveRecord::Base
     belongs_to :owner, polymorphic: true, optional: true
 
@@ -17,14 +20,17 @@ module FulfilApi
 
     normalizes :merchant_id, with: ->(merchant_id) { FulfilApi::OAuth::Authorization.normalize(merchant_id) }
 
-    validates :merchant_id, presence: true, uniqueness: { scope: %i[owner_type owner_id] }
+    validates :merchant_id, presence: true
+    validates :owner_id, uniqueness: { message: "is already connected to a Fulfil workspace", scope: :owner_type }
 
     scope :global, -> { where(owner: nil) }
 
     serialize :scopes, coder: JSON, type: Array
 
-    # Records the outcome of a completed authorization flow, replacing the
-    #   tokens of an earlier installation on the same workspace.
+    # Records the outcome of a completed authorization flow.
+    #
+    # Installing replaces whatever the owner was connected to before, rather than
+    #   leaving it connected to two Fulfil workspaces at once.
     #
     # @param token [FulfilApi::OAuth::Token] The granted access token.
     # @param merchant_id [String] The workspace the app was installed on.
@@ -32,7 +38,13 @@ module FulfilApi
     #   to, or `nil` for the application-wide installation.
     # @return [FulfilApi::Installation]
     def self.install(token, merchant_id:, owner: nil)
-      installation = find_or_initialize_by(owner: owner, merchant_id: merchant_id)
+      installation = find_or_initialize_by(owner: owner)
+      installation.merchant_id = merchant_id
+
+      # A token granted by one workspace is worthless on another, so moving the
+      #   owner to a different workspace drops what the previous one granted.
+      installation.offline_access_token = nil if installation.merchant_id_changed?
+
       installation.assign_token(token)
       installation.save!
       installation
