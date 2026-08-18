@@ -49,7 +49,7 @@ module FulfilApi
       # @yield [FulfilApi::Relation] Yields FulfilApi::Relation
       #   objects to work with a batch of records.
       # @return [FulfilApi::Relation]
-      def in_batches(of: 500, retries: :unlimited) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+      def in_batches(of: 500, retries: :unlimited) # rubocop:disable Metrics/MethodLength
         current_retry = 0
         current_offset = request_offset.presence || 0
         batch_size = of
@@ -64,18 +64,14 @@ module FulfilApi
 
           current_offset += 1
           current_retry = 0 # Reset the retries back to the default
-        rescue FulfilApi::Error => e
-          if e.details[:response_status] == 429
-            if retries != :unlimited && current_retry > retries
-              raise RetryLimitExceeded, "the maximum number of #{retries} retries has been reached."
-            end
-
-            current_retry += 1
-            sleep 0.25
-            retry
+        rescue FulfilApi::HttpError::TooManyRequests
+          if retries != :unlimited && current_retry > retries
+            raise RetryLimitExceeded, "the maximum number of #{retries} retries has been reached."
           end
 
-          raise e
+          current_retry += 1
+          sleep 0.25
+          retry
         end
 
         self

@@ -4,6 +4,12 @@ require "test_helper"
 
 module FulfilApi
   class ClientTest < Minitest::Test
+    TOO_MANY_REQUESTS = {
+      code: 429,
+      name: "Too Many Requests",
+      description: "This user has exceeded an allotted request count. Try again later."
+    }.freeze
+
     def setup
       @merchant_id = "merchant-#{SecureRandom.uuid}"
 
@@ -58,6 +64,25 @@ module FulfilApi
 
       assert_equal 422, error.details[:response_status]
       assert_equal({ error: "something went wrong" }.to_json, error.details[:response_body])
+    end
+
+    def test_reraising_of_http_errors_as_the_error_for_the_status_code
+      stub_fulfil_request(:get, status: 429, response: TOO_MANY_REQUESTS)
+
+      assert_raises FulfilApi::HttpError::TooManyRequests do
+        @client.get("sale.sale/123")
+      end
+    end
+
+    def test_reraising_of_http_errors_with_the_message_reported_by_fulfil
+      stub_fulfil_request(:get, status: 429, response: TOO_MANY_REQUESTS)
+
+      error =
+        assert_raises FulfilApi::HttpError do
+          @client.get("sale.sale/123")
+        end
+
+      assert_equal TOO_MANY_REQUESTS[:description], error.message
     end
 
     def test_inclusion_of_oauth_access_token
