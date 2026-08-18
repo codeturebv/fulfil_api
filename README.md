@@ -149,6 +149,35 @@ line_items = FulfilApi::Resource.set(model_name: "sale.line").where(["id", "in",
 line_items = FulfilApi::Resource.set(model_name: "sale.line").find_by(["sale.id", "=", 100])
 ```
 
+### Handling Errors
+
+Whenever a request to Fulfil fails, the gem raises a `FulfilApi::HttpError`. Every HTTP status code has its own subclass, named after the status code it represents, so you can rescue the exact failure you care about:
+
+```ruby
+begin
+  FulfilApi::Resource.set(model_name: "sale.sale").find_by(["id", "=", 100])
+rescue FulfilApi::HttpError::TooManyRequests => exception
+  puts exception.message    # => "This user has exceeded an allotted request count. Try again later."
+  puts exception.status_code # => 429
+
+  sleep exception.response_headers["retry-after"].to_i
+  retry
+end
+```
+
+The message is the description reported by Fulfil. The raw response is available through `#response_body`, `#response_headers` and `#status_code`.
+
+To catch anything that went wrong, rescue the base class instead:
+
+```ruby
+rescue FulfilApi::HttpError => exception
+  Rails.logger.error("Fulfil responded with #{exception.status_code}: #{exception.message}")
+```
+
+A request that never reached Fulfil — a connection reset, a DNS failure, a timeout — has no status code to name and raises a `FulfilApi::HttpError` itself.
+
+`FulfilApi::HttpError` inherits from `FulfilApi::Error`, the base class of every error in this gem, so code that already rescues `FulfilApi::Error` keeps working unchanged.
+
 ### Using the 3PL (TPL) Client
 
 The gem also includes a client for Fulfil's [3PL Integration API](https://fulfil-3pl-integration-api.readme.io/reference/getting-started-with-your-api). This is a separate API that allows third-party logistics providers to interact with Fulfil on behalf of a merchant.

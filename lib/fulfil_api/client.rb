@@ -167,15 +167,10 @@ module FulfilApi
 
     # @param exception [Faraday::Error] Any error raised by Faraday during the execution
     #   of the HTTP request to the API endpoint.
+    # @raise [FulfilApi::HttpError] The error dedicated to the HTTP status code of the
+    #   response of Fulfil.
     def handle_request_error(exception)
-      raise FulfilApi::Error.new(
-        exception.message,
-        details: {
-          response_body: exception.response_body,
-          response_headers: exception.response_headers,
-          response_status: exception.response_status
-        }
-      )
+      raise FulfilApi::HttpError.from_faraday_error(exception)
     end
 
     # @param method [Symbol, String] The HTTP verb for the HTTP request.

@@ -156,6 +156,18 @@ module FulfilApi
       assert_equal({ error: "something went wrong" }.to_json, error.details[:response_body])
     end
 
+    def test_reraising_of_http_errors_as_the_error_for_the_status_code
+      stub_fulfil_tpl_request(:get, path: "inbound-transfers", status: 404,
+                                    response: { code: 404, name: "Not Found", description: "Record does not exist" })
+
+      error =
+        assert_raises FulfilApi::HttpError::NotFound do
+          @client.get("inbound-transfers")
+        end
+
+      assert_equal "Record does not exist", error.message
+    end
+
     def test_reuses_connection_across_client_instances_with_same_configuration
       FulfilApi::TplClient.reset_connection_cache!
 
