@@ -174,5 +174,20 @@ module FulfilApi
     def status_code
       details&.dig(:response_status)
     end
+
+    private
+
+    # Enriches the payload published by {FulfilApi::Error::Notifiable} with what
+    #   Fulfil reported, so a subscriber can tag its metrics by status code without
+    #   having to unpack the exception itself.
+    #
+    # @return [Hash]
+    def notification_payload
+      super.merge(
+        response_body: response_body,
+        response_headers: response_headers,
+        status_code: status_code
+      )
+    end
   end
 end

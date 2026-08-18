@@ -178,6 +178,50 @@ A request that never reached Fulfil — a connection reset, a DNS failure, a tim
 
 `FulfilApi::HttpError` inherits from `FulfilApi::Error`, the base class of every error in this gem, so code that already rescues `FulfilApi::Error` keeps working unchanged.
 
+### Subscribing to Errors
+
+Rescuing tells you about the one call you wrapped. To report *every* failure of the Fulfil API — to count rate limit hits in your APM, to page on authentication failures, to log what Fulfil actually said — subscribe once instead.
+
+Every `FulfilApi::Error` publishes an `ActiveSupport::Notifications` event named `error.fulfil_api` when it is raised. `FulfilApi.on_error` is the shorthand for listening to it:
+
+```ruby
+# config/initializers/fulfil_api.rb
+
+FulfilApi.on_error do |error|
+  Appsignal.increment_counter("fulfil_api_errors", 1, error: error.class.name)
+end
+```
+
+Because every error carries its own class, you can report only the failures you care about:
+
+```ruby
+FulfilApi.on_error do |error|
+  next unless error.is_a?(FulfilApi::HttpError::TooManyRequests)
+
+  Appsignal.increment_counter("fulfil_api_rate_limit_exceeded")
+end
+```
+
+Subscribing through `ActiveSupport::Notifications` directly gives you the full payload, which carries the HTTP details of a `FulfilApi::HttpError` as separate keys — handy as metric dimensions:
+
+```ruby
+ActiveSupport::Notifications.subscribe(FulfilApi::Error::EVENT_NAME) do |event|
+  event.payload[:exception]        # => ["FulfilApi::HttpError::TooManyRequests", "Try again later."]
+  event.payload[:exception_object] # => the FulfilApi::HttpError::TooManyRequests instance
+  event.payload[:status_code]      # => 429
+  event.payload[:response_headers] # => { "retry-after" => "5", ... }
+  event.payload[:response_body]    # => the raw response of Fulfil
+end
+```
+
+Both methods return the subscriber, so you can stop listening again with `ActiveSupport::Notifications.unsubscribe(subscriber)`.
+
+A few things worth knowing:
+
+- The event is published when an error is **raised**, not when it is built. Rescuing it afterwards does not suppress the notification, and retrying a request publishes one event per attempt — which is exactly what you want when counting rate limit hits.
+- The subscriber runs on the thread that raised the error, while the error travels up the stack. Keep it cheap and hand anything slow to a background job.
+- A subscriber cannot change the behaviour of your application. If it raises, the exception is swallowed and reported on `$stderr` rather than replacing the `FulfilApi::Error` on its way up.
+
 ### Using the 3PL (TPL) Client
 
 The gem also includes a client for Fulfil's [3PL Integration API](https://fulfil-3pl-integration-api.readme.io/reference/getting-started-with-your-api). This is a separate API that allows third-party logistics providers to interact with Fulfil on behalf of a merchant.
