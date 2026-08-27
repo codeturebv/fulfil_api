@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Read the `error_description` key of a failed response when building the message of a `FulfilApi::HttpError`. Fulfil reports the reason a workflow or action endpoint refused a request there, and the gem was falling back to Faraday's generic "the server responded with status 400" instead.
+
 - Add `#order` to the query interface, so a relation can ask Fulfil to sort the resources it returns. It takes fields as symbols, strings, hashes or Fulfil's own `[field, direction]` pairs, and sends them to the API as the `order` key of the request body.
 
 - Add `FulfilApi::InteractiveReport` for running Fulfil's interactive reports. Unlike `FulfilApi::Report`, which generates a document and answers with a URL, an interactive report lives on the model endpoint and returns its rows directly.

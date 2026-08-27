@@ -35,10 +35,11 @@ module FulfilApi
     # The keys of an error response of Fulfil that can hold the human readable
     #   message, in the order they're preferred.
     #
-    # Fulfil is not consistent in how it reports failures: HTTP level errors carry a
-    #   `description`, application level errors a `message`, and a handful of
-    #   endpoints only return an `error`.
-    MESSAGE_KEYS = %w[description message error].freeze
+    # Fulfil is not consistent in how it reports failures: OAuth and workflow
+    #   endpoints carry an `error_description`, HTTP level errors a `description`,
+    #   application level errors a `message`, and a handful of endpoints only
+    #   return an `error`.
+    MESSAGE_KEYS = %w[error_description description message error].freeze
 
     # Maps an HTTP status code onto the name of the {FulfilApi::HttpError} subclass
     #   representing it.

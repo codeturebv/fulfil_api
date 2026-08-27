@@ -42,6 +42,20 @@ module FulfilApi
       assert_instance_of FulfilApi::HttpError::TooManyRequests, exception
     end
 
+    def test_building_the_message_from_the_error_description_of_the_response
+      exception = FulfilApi::HttpError.from_faraday_error(faraday_error(400,
+                                                                        { error_description: "no return created" }))
+
+      assert_equal "no return created", exception.message
+    end
+
+    def test_preferring_the_error_description_over_the_other_message_keys
+      body = { error_description: "no return created", description: "Bad Request", message: "Bad Request" }
+      exception = FulfilApi::HttpError.from_faraday_error(faraday_error(400, body))
+
+      assert_equal "no return created", exception.message
+    end
+
     def test_building_the_message_from_the_description_of_the_response
       exception = FulfilApi::HttpError.from_faraday_error(faraday_error(429, TOO_MANY_REQUESTS))
 
