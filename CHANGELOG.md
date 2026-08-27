@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+- Add `#order` to the query interface, so a relation can ask Fulfil to sort the resources it returns. It takes fields as symbols, strings, hashes or Fulfil's own `[field, direction]` pairs, and sends them to the API as the `order` key of the request body.
+
+- Add `FulfilApi::InteractiveReport` for running Fulfil's interactive reports. Unlike `FulfilApi::Report`, which generates a document and answers with a URL, an interactive report lives on the model endpoint and returns its rows directly.
+
 - Publish an `ActiveSupport::Notifications` event named `error.fulfil_api` whenever a `FulfilApi::Error` is raised, so an application can report failures of the Fulfil API to its APM without rescuing every call into the gem. Subscribe with `FulfilApi.on_error { |error| ... }`, or through `ActiveSupport::Notifications` directly to also reach the status code, response body and response headers of a `FulfilApi::HttpError`.
 
 - Raise a `FulfilApi::HttpError` instead of a generic `FulfilApi::Error` when a request to Fulfil fails, with a dedicated subclass per HTTP status code (e.g. `FulfilApi::HttpError::TooManyRequests` for a 429). The exception message is now the description reported by Fulfil rather than its serialized response body, and the status code, body and headers are available through `#status_code`, `#response_body` and `#response_headers`. `FulfilApi::HttpError` inherits from `FulfilApi::Error`, so existing rescues keep working.

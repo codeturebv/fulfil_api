@@ -115,6 +115,21 @@ p line_items.first["sale"]["reference"] # => SO1234
 # Query nested data from a relation
 line_items = FulfilApi::Resource.set(model_name: "sale.line").where(["sale.reference", "=", "SO1234"])
 p line_items.first["id"] # => 10
+
+# Sort the resources Fulfil returns
+sales_orders = FulfilApi::Resource.set(model_name: "sale.sale").order(id: :desc)
+p sales_orders.first["id"] # => 9999
+```
+
+Sorting accepts whichever form reads best at the call site. A bare field sorts
+ascending, a hash names the direction, and multiple fields are applied in the
+order they're given.
+
+```ruby
+FulfilApi::Resource.set(model_name: "sale.sale").order(:create_date)
+FulfilApi::Resource.set(model_name: "sale.sale").order(id: :desc)
+FulfilApi::Resource.set(model_name: "sale.sale").order(:create_date, number: :desc)
+FulfilApi::Resource.set(model_name: "sale.sale").order(["id", "DESC"])
 ```
 
 > **NOTE:** It's important to note that the results from the Fulfil API are cached. This prevents you from accidentally overasking the Fulfil API. To reload the resources from the Fulfil API after you've already fetchted them, use the `.reload` on the returned relation (e.g. `line_items.reload`).
@@ -221,6 +236,24 @@ A few things worth knowing:
 - The event is published when an error is **raised**, not when it is built. Rescuing it afterwards does not suppress the notification, and retrying a request publishes one event per attempt — which is exactly what you want when counting rate limit hits.
 - The subscriber runs on the thread that raised the error, while the error travels up the stack. Keep it cheap and hand anything slow to a background job.
 - A subscriber cannot change the behaviour of your application. If it raises, the exception is swallowed and reported on `$stderr` rather than replacing the `FulfilApi::Error` on its way up.
+
+### Running an Interactive Report
+
+Fulfil's interactive reports are a different thing from the documents that
+`FulfilApi::Report` generates. They live on the model endpoint, take their
+parameters as a request body, and answer with the rows of the report rather than
+a URL to download.
+
+```ruby
+rows = FulfilApi::InteractiveReport.execute("inventory.quantity.ireport", warehouse: 12, show_products: "all")
+```
+
+Dates are serialized into the extended JSON format Fulfil expects, so you can
+pass a `Date` straight through.
+
+```ruby
+FulfilApi::InteractiveReport.execute("inventory.quantity.ireport", start_date: Date.new(2026, 8, 27))
+```
 
 ### Using the 3PL (TPL) Client
 
