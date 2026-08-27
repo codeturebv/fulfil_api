@@ -58,6 +58,34 @@ module FulfilApi
         end
       end
 
+      # Sorts the API resources returned by Fulfil's API.
+      #
+      # Fulfil expects the sort order as a list of field/direction pairs, applied in
+      #   the order they're given. Both are accepted here, in whichever form reads
+      #   best at the call site.
+      #
+      # @note If not specified, Fulfil falls back to the default order of the model.
+      #
+      # @example Sorting on a single field, ascending
+      #   FulfilApi::Resource.set(model_name: "sale.sale").order(:create_date)
+      #
+      # @example Sorting on a single field, descending
+      #   FulfilApi::Resource.set(model_name: "sale.sale").order(id: :desc)
+      #
+      # @example Sorting on multiple fields
+      #   FulfilApi::Resource.set(model_name: "sale.sale").order(:create_date, number: :desc)
+      #
+      # @example Passing Fulfil's own format straight through
+      #   FulfilApi::Resource.set(model_name: "sale.sale").order(["id", "DESC"])
+      #
+      # @param fields [Array<Symbol, String, Array, Hash>] The fields to sort on.
+      # @return [FulfilApi::Relation] A new {Relation} instance with the sort order applied.
+      def order(*fields)
+        clone.tap do |relation|
+          relation.request_order = (request_order + fields.flat_map { |field| normalize_order(field) }).uniq
+        end
+      end
+
       # Specifies the fields to include in the response from Fulfil's API. By default, only
       #   the ID is returned.
       #
@@ -94,6 +122,35 @@ module FulfilApi
           relation.conditions << conditions
           relation.conditions.uniq!
         end
+      end
+
+      private
+
+      # Turns a single argument to {#order} into the list of field/direction pairs
+      #   that Fulfil's API expects.
+      #
+      # @param field [Symbol, String, Array, Hash] The field (and optional direction) to sort on.
+      # @return [Array<Array<String>>] The normalized field/direction pairs.
+      def normalize_order(field)
+        case field
+        when Hash then field.map { |name, direction| order_pair(name, direction) }
+        when Array then [order_pair(*field)]
+        else [order_pair(field)]
+        end
+      end
+
+      # @param name [Symbol, String] The name of the field to sort on.
+      # @param direction [Symbol, String] The direction to sort in.
+      # @return [Array<String>] A single field/direction pair.
+      # @raise [ArgumentError] When the direction is not one Fulfil understands.
+      def order_pair(name, direction = :asc)
+        direction = direction.to_s.upcase
+
+        unless %w[ASC DESC].include?(direction)
+          raise ArgumentError, "Unknown order direction #{direction.inspect}. Use :asc or :desc."
+        end
+
+        [name.to_s, direction]
       end
     end
   end

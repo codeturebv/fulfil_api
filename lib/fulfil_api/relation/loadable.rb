@@ -16,19 +16,11 @@ module FulfilApi
       # Requires that {#model_name} is set; raises an exception if it's not.
       #
       # @return [true, false] True if the resources were loaded successfully.
-      def load # rubocop:disable Metrics/MethodLength
+      def load
         return true if loaded?
         raise FulfilApi::Resource::ModelNameMissing if model_name.nil?
 
-        response = FulfilApi.client.put(
-          "/model/#{model_name}/search_read",
-          body: {
-            filters: conditions,
-            fields: fields,
-            limit: request_limit,
-            offset: request_offset
-          }.compact_blank
-        )
+        response = FulfilApi.client.put("/model/#{model_name}/search_read", body: query)
 
         # NOTE: The /search_read endpoint will always be an array. Therefore, we're
         #   always looping over the response values.
@@ -53,6 +45,25 @@ module FulfilApi
       def reload
         @loaded = false
         load
+      end
+
+      private
+
+      # Builds the request body for the /search_read endpoint out of the currently
+      #   applied query conditions.
+      #
+      # @note Any condition that wasn't set is left out entirely, so Fulfil falls
+      #   back to its own defaults rather than being handed a null.
+      #
+      # @return [Hash] The request body.
+      def query
+        {
+          filters: conditions,
+          fields: fields,
+          limit: request_limit,
+          offset: request_offset,
+          order: request_order
+        }.compact_blank
       end
     end
   end

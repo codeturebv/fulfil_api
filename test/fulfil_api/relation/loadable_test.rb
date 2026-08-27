@@ -82,6 +82,26 @@ module FulfilApi
           assert_equal 5, JSON.parse(request.body)["offset"]
         end
       end
+
+      def test_loading_the_relation_with_an_order
+        stub_fulfil_request(:put, response: [{ id: 100 }], model: "sale.sale")
+
+        @relation.set(model_name: "sale.sale").order(:create_date, id: :desc).load
+
+        assert_requested :put, %r{sale.sale/search_read}i do |request|
+          assert_equal [%w[create_date ASC], %w[id DESC]], JSON.parse(request.body)["order"]
+        end
+      end
+
+      def test_loading_the_relation_without_an_order
+        stub_fulfil_request(:put, response: [{ id: 100 }], model: "sale.sale")
+
+        @relation.set(model_name: "sale.sale").load
+
+        assert_requested :put, %r{sale.sale/search_read}i do |request|
+          refute_includes JSON.parse(request.body), "order"
+        end
+      end
     end
   end
 end
