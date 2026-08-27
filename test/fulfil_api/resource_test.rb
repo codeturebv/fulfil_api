@@ -40,6 +40,61 @@ module FulfilApi
       assert_nil Resource.new({ model_name: "sale.sale" }).id
     end
 
+    def test_digging_into_a_nested_attribute
+      resource = Resource.new({ "sale.party.name" => "Freddie Mercury", model_name: "sale.line" })
+
+      assert_equal "Freddie Mercury", resource.dig("sale", "party", "name")
+    end
+
+    def test_digging_with_symbolized_attribute_names
+      resource = Resource.new({ "sale.party.name" => "Freddie Mercury", model_name: "sale.line" })
+
+      assert_equal "Freddie Mercury", resource.dig(:sale, :party, :name)
+    end
+
+    def test_digging_into_an_attribute_that_is_missing
+      resource = Resource.new({ warehouse: 10, model_name: "sale.sale" })
+
+      assert_nil resource.dig("sale", "party", "name")
+    end
+
+    def test_digging_into_a_single_attribute
+      resource = Resource.new({ warehouse: 10, model_name: "sale.sale" })
+
+      # Deliberately the single argument form, which has to keep behaving like #[].
+      assert_equal 10, resource.dig("warehouse") # rubocop:disable Style/SingleArgumentDig
+    end
+
+    def test_fetching_an_attribute
+      resource = Resource.new({ warehouse: 10, model_name: "sale.sale" })
+
+      assert_equal 10, resource.fetch("warehouse")
+      assert_equal 10, resource.fetch(:warehouse)
+    end
+
+    def test_fetching_an_attribute_that_is_missing
+      resource = Resource.new({ model_name: "sale.sale" })
+
+      assert_raises KeyError do
+        resource.fetch("warehouse")
+      end
+    end
+
+    def test_fetching_an_attribute_that_is_missing_with_a_default
+      resource = Resource.new({ model_name: "sale.sale" })
+
+      assert_equal 25, resource.fetch("warehouse", 25)
+      assert_equal 25, resource.fetch("warehouse") { 25 } # rubocop:disable Style/RedundantFetchBlock
+    end
+
+    def test_checking_for_the_presence_of_an_attribute
+      resource = Resource.new({ warehouse: 10, model_name: "sale.sale" })
+
+      assert resource.key?("warehouse")
+      assert resource.key?(:warehouse)
+      refute resource.key?("reference")
+    end
+
     def test_rendering_all_attributes_as_hash
       resource = Resource.new({ warehouse: 10, model_name: "sale.sale" })
 

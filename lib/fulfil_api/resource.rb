@@ -56,6 +56,46 @@ module FulfilApi
       @attributes[attribute_name]
     end
 
+    # Reads a value out of a nested attribute, the way {Hash#dig} does.
+    #
+    # A resource holds the attributes Fulfil returned, and the fields read through a
+    #   relation are nested under the field they belong to. Asking for
+    #   `sale.party.name` puts the name two levels deep, and this reaches it without
+    #   having to know whether every level along the way came back.
+    #
+    # @example reading a field of a relation
+    #   sales_line.dig("sale", "party", "name") # => "Freddie Mercury"
+    #
+    # @param attribute_name [String, Symbol] The name of the attribute.
+    # @param nested_attribute_names [Array<String, Symbol, Integer>] The path to follow.
+    # @return [Any, nil] The value, or nil when any step of the path is missing.
+    def dig(attribute_name, *nested_attribute_names)
+      @attributes.dig(attribute_name, *nested_attribute_names)
+    end
+
+    # Looks up the value for the given attribute name, raising when the resource
+    #   has no such attribute.
+    #
+    # Useful to tell "Fulfil returned no value for this field" apart from "this field
+    #   was never asked for", which {#[]} answers with nil either way.
+    #
+    # @param attribute_name [String, Symbol] The name of the attribute.
+    # @param default [Array] An optional default, as {Hash#fetch} takes one.
+    # @yield [attribute_name] An optional block producing the default.
+    # @return [Any]
+    # @raise [KeyError] When the attribute is missing and no default was given.
+    def fetch(attribute_name, *default, &block)
+      @attributes.fetch(attribute_name, *default, &block)
+    end
+
+    # Checks whether the resource carries the given attribute.
+    #
+    # @param attribute_name [String, Symbol] The name of the attribute.
+    # @return [true, false]
+    def key?(attribute_name)
+      @attributes.key?(attribute_name)
+    end
+
     # Builds a structure for keeping track of any errors when trying to use the
     #   persistance methods for the API resource.
     #

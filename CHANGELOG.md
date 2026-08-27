@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Read a resource the way you read a hash: `#dig` reaches into the fields of a relation without having to check every level along the way, `#fetch` tells a field that came back empty apart from one that was never asked for, and `#key?` answers whether the resource carries an attribute at all.
+
 - Read the `error_description` key of a failed response when building the message of a `FulfilApi::HttpError`. Fulfil reports the reason a workflow or action endpoint refused a request there, and the gem was falling back to Faraday's generic "the server responded with status 400" instead.
 
 - Add `#order` to the query interface, so a relation can ask Fulfil to sort the resources it returns. It takes fields as symbols, strings, hashes or Fulfil's own `[field, direction]` pairs, and sends them to the API as the `order` key of the request body.

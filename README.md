@@ -150,6 +150,19 @@ sales_order = FulfilApi::Resource.set(model_name: "sale.sale").select("channel.n
 p sales_order["channel"]["name"] # => Shopify
 ```
 
+A resource also reads like a `Hash` in the other ways you would expect. `#dig`
+reaches into a relation without having to check every level along the way,
+`#fetch` distinguishes a field that came back empty from one that was never
+asked for, and `#key?` answers whether the resource carries an attribute at all.
+
+```ruby
+sales_line = FulfilApi::Resource.set(model_name: "sale.line").select("sale.party.name").find_by(["id", "=", 10])
+
+p sales_line.dig("sale", "party", "name") # => "Freddie Mercury"
+p sales_line.fetch("quantity", 0)         # => 0
+p sales_line.key?("quantity")             # => false
+```
+
 > **NOTE:** Fulfil is not able to return nested data from `Array`-like API resources. If you want to find all line items of a sales order, it's typically better to query the line item resource directly.
 
 ```ruby
