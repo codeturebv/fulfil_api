@@ -76,23 +76,23 @@ module FulfilApi
       #   $ build_attribute("warehouse.id", 10)
       #   => { "warehouse" => { "id" => 10 } }
       #
-      # @param attribute_names [String, Symbol] The expanded list of attribute names
+      # @example attribute where the relation and its field share a name
+      #   $ build_attribute("tracking_number.tracking_number", "T04DDA5014242536")
+      #   => { "tracking_number" => { "tracking_number" => "T04DDA5014242536" } }
+      #
+      # @param name [String, Symbol] The attribute name
       # @param value [Any] The attribute value
       # @return [Hash] The newly build attribute
-      def build_attribute(name, value) # rubocop:disable Metrics/MethodLength
-        attribute_names = name.to_s.split(".")
-        attribute = {}
-        attribute_level = attribute
+      def build_attribute(name, value)
+        *relation_names, attribute_name = name.to_s.split(".")
+        return {} if attribute_name.nil?
 
-        attribute_names.each do |attribute_name|
-          if attribute_name == attribute_names.last
-            attribute_level[attribute_name] = type_cast_attribute_value(value)
-          else
-            attribute_level[attribute_name] ||= {}
-            attribute_level = attribute_level[attribute_name]
-          end
+        attribute = {}
+        attribute_level = relation_names.reduce(attribute) do |level, relation_name|
+          level[relation_name] ||= {}
         end
 
+        attribute_level[attribute_name] = type_cast_attribute_value(value)
         attribute
       end
 

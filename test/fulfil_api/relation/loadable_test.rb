@@ -82,6 +82,26 @@ module FulfilApi
           assert_equal 5, JSON.parse(request.body)["offset"]
         end
       end
+
+      def test_loading_a_nested_relation_named_after_its_attribute
+        response = [{
+          "id" => 1_861_800,
+          "number" => "CS1861800",
+          "tracking_number" => 1_843_751,
+          "tracking_number.tracking_number" => "T04DDA5014242536"
+        }]
+        stub_fulfil_request(:put, response: response, model: "stock.shipment.out")
+
+        shipment = @relation
+                   .set(model_name: "stock.shipment.out")
+                   .select("number", "tracking_number", "tracking_number.tracking_number")
+                   .first
+
+        assert_equal(
+          { "id" => 1_843_751, "tracking_number" => "T04DDA5014242536" },
+          shipment["tracking_number"]
+        )
+      end
     end
   end
 end
