@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Expand a nested field into its relation even when the field carries the same name as the relation it hangs off. Selecting both `tracking_number` and `tracking_number.tracking_number` on a shipment used to drop the relation and leave the tracking number as a plain string on the shipment itself, because the gem decided where a field belonged by matching names in the path instead of counting positions.
+
 - Publish an `ActiveSupport::Notifications` event named `error.fulfil_api` whenever a `FulfilApi::Error` is raised, so an application can report failures of the Fulfil API to its APM without rescuing every call into the gem. Subscribe with `FulfilApi.on_error { |error| ... }`, or through `ActiveSupport::Notifications` directly to also reach the status code, response body and response headers of a `FulfilApi::HttpError`.
 
 - Raise a `FulfilApi::HttpError` instead of a generic `FulfilApi::Error` when a request to Fulfil fails, with a dedicated subclass per HTTP status code (e.g. `FulfilApi::HttpError::TooManyRequests` for a 429). The exception message is now the description reported by Fulfil rather than its serialized response body, and the status code, body and headers are available through `#status_code`, `#response_body` and `#response_headers`. `FulfilApi::HttpError` inherits from `FulfilApi::Error`, so existing rescues keep working.

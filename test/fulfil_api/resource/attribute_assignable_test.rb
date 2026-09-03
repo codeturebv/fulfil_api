@@ -130,6 +130,57 @@ module FulfilApi
           @resource.attributes
         )
       end
+
+      def test_assigning_a_nested_attribute_named_after_its_relation
+        @resource.assign_attribute("tracking_number.tracking_number", "T04DDA5014242536")
+
+        assert_equal(
+          { "tracking_number" => { "tracking_number" => "T04DDA5014242536" } },
+          @resource.attributes
+        )
+      end
+
+      def test_assigning_a_deeply_nested_attribute_named_after_its_relations
+        @resource.assign_attribute("tracking_number.tracking_number.tracking_number", "T04DDA5014242536")
+
+        assert_equal(
+          { "tracking_number" => { "tracking_number" => { "tracking_number" => "T04DDA5014242536" } } },
+          @resource.attributes
+        )
+      end
+
+      def test_assigning_a_nested_relation_named_after_its_attribute
+        raw_values = { "tracking_number" => 1_843_751, "tracking_number.tracking_number" => "T04DDA5014242536" }
+        @resource.assign_attributes(raw_values)
+
+        assert_equal(
+          { "tracking_number" => { "id" => 1_843_751, "tracking_number" => "T04DDA5014242536" } },
+          @resource.attributes
+        )
+      end
+
+      def test_assigning_a_nested_relation_named_after_its_attribute_in_reverse_order
+        raw_values = { "tracking_number.tracking_number" => "T04DDA5014242536", "tracking_number" => 1_843_751 }
+        @resource.assign_attributes(raw_values)
+
+        assert_equal(
+          { "tracking_number" => { "tracking_number" => "T04DDA5014242536", "id" => 1_843_751 } },
+          @resource.attributes
+        )
+      end
+
+      def test_assigning_a_nested_relation_named_after_its_attribute_with_a_string_as_id
+        raw_values = {
+          "tracking_number" => "stock.shipment.tracking,1843751",
+          "tracking_number.tracking_number" => "T04DDA5014242536"
+        }
+        @resource.assign_attributes(raw_values)
+
+        assert_equal(
+          { "tracking_number" => { "id" => 1_843_751, "tracking_number" => "T04DDA5014242536" } },
+          @resource.attributes
+        )
+      end
     end
   end
 end
