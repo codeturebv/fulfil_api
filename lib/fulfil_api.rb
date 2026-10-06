@@ -7,6 +7,7 @@ loader.ignore("#{__dir__}/fulfil_api/test_helper.rb")
 loader.setup
 
 require "active_support"
+require "active_support/cache"
 require "active_support/core_ext/enumerable"
 require "active_support/core_ext/hash/deep_merge"
 require "active_support/core_ext/hash/indifferent_access"

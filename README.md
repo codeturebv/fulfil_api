@@ -92,6 +92,8 @@ FulfilApi.configure do |config|
 end
 ```
 
+- `circuit_breaker` (`Hash`, `true`, optional): Stops sending requests to a Fulfil instance that keeps failing. Off by default; `true` turns it on with the default thresholds. See [Stopping requests to a failing Fulfil instance](#stopping-requests-to-a-failing-fulfil-instance).
+
 - `connection_options` (`Hash`): Tuning for the persistent (keep-alive) connection. Supported keys:
   - `max_retries` (optional): Re-enables Ruby's built-in retry, which retries **every** idempotent request (`GET`/`HEAD`/`PUT`/`DELETE`/`OPTIONS`) whatever its endpoint, writes through `PUT` included. Off by default; prefer `retry_options`.
   - `idle_timeout` (`Integer`, optional): Seconds a pooled socket may sit idle before it is recycled. Lower this towards your server's keep-alive window to shrink the stale-socket window for non-idempotent requests.
@@ -113,6 +115,28 @@ end
 Without an argument, `with_deadline` uses the configured `deadline`, and runs the block without a deadline when that's not set either. A nested deadline can shorten the one around it but never extend it.
 
 > **NOTE:** The deadline decides whether a request may start, not how long it may take. A request that starts just before the budget runs out is still bound by its own `request_options`, so the worst case is the deadline plus one request's timeouts. Pair a deadline with tight `request_options` (through `FulfilApi.with_config`) where that matters.
+
+### Stopping requests to a failing Fulfil instance
+
+An application that talks to several Fulfil instances shouldn't let one struggling instance tie up all of its threads. With the circuit breaker on, an instance that fails `failure_threshold` times within `window` seconds is skipped for `cool_down` seconds: requests to it raise a `FulfilApi::Circuit::Open` without touching the network. Timeouts, dropped connections and 5xx responses count as failures. A 4xx response is an answer and doesn't count, and a request that failed after retrying counts once.
+
+```ruby
+FulfilApi.configure do |config|
+  # The defaults: 5 failures within 60 seconds opens the circuit for 30 seconds
+  config.circuit_breaker = true
+
+  # Or with custom thresholds
+  config.circuit_breaker = { failure_threshold: 3, window: 30, cool_down: 60 }
+end
+```
+
+The thresholds are global, but every Fulfil instance gets its own circuit, so one failing instance never stops requests to another. The `Client` and the `TplClient` of the same instance share a circuit.
+
+By default each process keeps its circuits in memory and has to see the failures for itself. Pass any `ActiveSupport::Cache::Store` as the `store` to share the state between processes:
+
+```ruby
+config.circuit_breaker = { store: Rails.cache }
+```
 
 ### Querying the Fulfil API
 

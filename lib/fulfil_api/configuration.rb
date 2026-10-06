@@ -7,7 +7,7 @@ module FulfilApi
   #   to these settings.
   class Configuration
     attr_accessor :access_token, :api_version, :deadline, :merchant_id, :request_options, :tpl
-    attr_reader :connection_options, :retry_options
+    attr_reader :circuit_breaker, :connection_options, :retry_options
 
     DEFAULT_API_VERSION = "v2"
     DEFAULT_REQUEST_OPTIONS = { open_timeout: 1, read_timeout: 5, write_timeout: 5, timeout: 5 }.freeze
@@ -22,6 +22,10 @@ module FulfilApi
     #   endpoint. Fulfil writes through PUT too, so it is off by default in favour
     #   of the endpoint scoped {#retry_options}.
     DEFAULT_CONNECTION_OPTIONS = {}.freeze
+
+    # The thresholds of the circuit breaker, see {FulfilApi::Circuit}. The circuit
+    #   breaker is off unless it's configured.
+    DEFAULT_CIRCUIT_BREAKER_OPTIONS = { failure_threshold: 5, window: 60, cool_down: 30 }.freeze
 
     # Retries for requests that failed before Fulfil could answer them: a dropped
     #   keep-alive socket, a refused connection or a timeout.
@@ -51,6 +55,28 @@ module FulfilApi
 
       # Sets the default options if not provided
       set_default_options
+    end
+
+    # Turns the circuit breaker on or off. The thresholds are global, the state is
+    #   kept per Fulfil instance, so one failing instance never stops requests to
+    #   another. See {FulfilApi::Circuit}.
+    #
+    # @example with the default thresholds
+    #   config.circuit_breaker = true
+    #
+    # @example with custom thresholds, shared between processes
+    #   config.circuit_breaker = { failure_threshold: 3, window: 30, cool_down: 60, store: Rails.cache }
+    #
+    # @param options [Hash, true, false, nil] The thresholds and store, `true` for the
+    #   defaults, or `false`/`nil` to turn the circuit breaker off.
+    # @return [void]
+    def circuit_breaker=(options)
+      @circuit_breaker =
+        case options
+        when nil, false then nil
+        when true then DEFAULT_CIRCUIT_BREAKER_OPTIONS
+        else DEFAULT_CIRCUIT_BREAKER_OPTIONS.merge(options)
+        end
     end
 
     # Merges the provided connection options over the defaults so that, for

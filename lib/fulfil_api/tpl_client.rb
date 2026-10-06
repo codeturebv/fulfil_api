@@ -173,7 +173,7 @@ module FulfilApi
     def connection_cache_key
       [
         merchant_id, api_version, configuration.request_options, configuration.connection_options,
-        configuration.retry_options
+        configuration.retry_options, configuration.circuit_breaker
       ]
     end
 
