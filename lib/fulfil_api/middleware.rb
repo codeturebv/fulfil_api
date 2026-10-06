@@ -13,7 +13,6 @@ module FulfilApi
     def self.apply(connection, configuration)
       connection.use CircuitBreaker, configuration.circuit_breaker if configuration.circuit_breaker
       connection.use Retry, configuration.retry_options
-      connection.use Deadline
     end
   end
 end
