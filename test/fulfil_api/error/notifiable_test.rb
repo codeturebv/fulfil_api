@@ -16,9 +16,8 @@ module FulfilApi
 
       def test_publishing_an_event_when_raising_an_error_instance
         events = capture_error_events do
-          # rubocop:disable Style/RaiseArgs -- raising an instance is the form under test
+          # rubocop:disable-next Style/RaiseArgs -- raising an instance is the form under test
           assert_raises(FulfilApi::Error) { raise FulfilApi::Error.new("something went wrong") }
-          # rubocop:enable Style/RaiseArgs
         end
 
         assert_equal 1, events.size
