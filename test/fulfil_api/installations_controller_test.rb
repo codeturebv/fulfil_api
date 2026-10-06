@@ -10,6 +10,8 @@ module FulfilApi
 
     def teardown
       FulfilApi.configuration.oauth.after_install_path = OAuth::Configuration::DEFAULT_AFTER_INSTALL_PATH
+      FulfilApi.configuration.oauth.parent_controller = "ApplicationController"
+      super
     end
 
     test "new sends the user to Fulfil's consent screen" do

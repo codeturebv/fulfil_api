@@ -11,6 +11,7 @@ module FulfilApi
     def teardown
       # Ensure the configuration is always reset after completing each of the tests.
       FulfilApi.configuration = FulfilApi::Configuration.new
+      super
     end
 
     def test_default_configuration_values
