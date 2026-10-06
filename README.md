@@ -57,7 +57,7 @@ This makes it easy to use different settings in contexts with different constrai
 ```ruby
 FulfilApi.with_config(
   request_options: { open_timeout: 5, read_timeout: 60, write_timeout: 30 },
-  connection_options: { max_retries: 3, idle_timeout: 10 }
+  retry_options: { max_retries: 3 }
 ) do
   # Long-running work against the Fulfil API
 end
@@ -77,8 +77,21 @@ The following configuration options are (currently) available throught both conf
 
 > **NOTE:** With the persistent (keep-alive) adapter there is no single whole-request `timeout`; Faraday resolves `read_timeout`, `open_timeout`, and `write_timeout` independently. `read_timeout` is the value that governs a slow or stalled response.
 
+- `retry_options` (`Hash`): Which requests are retried when they fail before Fulfil answers them (a dropped keep-alive socket, a refused connection or a timeout). An error response from Fulfil is never retried. Supported keys:
+  - `max_retries` (default `1`): The maximum number of retries per request.
+  - `requests` (default: every `GET`, and `PUT` requests to `search_read` and `search_count`): A hash of HTTP verbs, each mapped to `true` for every endpoint or to a list of patterns matched against the request path. Fulfil reads through `PUT` as well as writes through it, so only the read endpoints are retried by default. Retrying a write that timed out could apply it twice.
+
+```ruby
+FulfilApi.configure do |config|
+  config.retry_options = {
+    max_retries: 2,
+    requests: { get: true, put: [%r{/search_read\z}, %r{/search_count\z}, %r{/model/sale\.sale/\d+\z}] }
+  }
+end
+```
+
 - `connection_options` (`Hash`): Tuning for the persistent (keep-alive) connection. Supported keys:
-  - `max_retries` (default `1`): Re-enables Ruby's built-in retry for **idempotent** requests (`GET`/`HEAD`/`PUT`/`DELETE`/`OPTIONS`). The `net_http_persistent` adapter disables this by forcing it to `0`, which makes a keep-alive socket the server has already dropped surface as a read timeout instead of being retried transparently on a fresh socket. `POST` is never auto-retried, so this is side-effect safe. Set to `0` to restore the adapter's default behaviour.
+  - `max_retries` (optional): Re-enables Ruby's built-in retry, which retries **every** idempotent request (`GET`/`HEAD`/`PUT`/`DELETE`/`OPTIONS`) whatever its endpoint, writes through `PUT` included. Off by default; prefer `retry_options`.
   - `idle_timeout` (`Integer`, optional): Seconds a pooled socket may sit idle before it is recycled. Lower this towards your server's keep-alive window to shrink the stale-socket window for non-idempotent requests.
   - `pool_size` (`Integer`, optional): Maximum number of concurrent connections kept in the pool.
 
