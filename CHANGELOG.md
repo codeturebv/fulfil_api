@@ -1,6 +1,6 @@
 ## [Unreleased]
 
-- Add a circuit breaker that stops sending requests to a Fulfil instance that keeps failing, so a struggling instance can't tie up every thread of an application that talks to several of them. Turn it on with `circuit_breaker: true`, or pass thresholds and a shared `ActiveSupport::Cache::Store`. Each instance gets its own circuit; while it's open, requests raise a `FulfilApi::Circuit::Open` without touching the network.
+- Add an optional circuit breaker, backed by [Faulty](https://github.com/ParentSquare/faulty), that stops sending requests to a Fulfil instance that keeps failing, so a struggling instance can't tie up every thread of an application that talks to several of them. Pass a `Faulty` instance as `circuit_breaker`; each Fulfil instance gets its own circuit, and while it's open requests raise a `FulfilApi::CircuitOpen` without touching the network.
 
 - Retry only the requests that are safe to retry. Ruby's built-in retry treated every `PUT` as idempotent, but Fulfil writes through `PUT` too (updating a record, holding a shipment), so a write that timed out could be sent twice. Retries now run through `faraday-retry`, configured to only retry `GET` requests and `PUT` requests to `search_read` and `search_count` by default, configurable through the new `retry_options`. The built-in retry is off by default again; `connection_options: { max_retries: ... }` still turns it on.
 

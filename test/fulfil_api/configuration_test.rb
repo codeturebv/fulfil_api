@@ -29,26 +29,6 @@ module FulfilApi
       assert_nil @config.circuit_breaker
     end
 
-    def test_circuit_breaker_uses_the_default_thresholds_when_turned_on
-      config = FulfilApi::Configuration.new(circuit_breaker: true)
-
-      assert_equal Configuration::DEFAULT_CIRCUIT_BREAKER_OPTIONS, config.circuit_breaker
-    end
-
-    def test_circuit_breaker_options_merge_over_the_defaults
-      config = FulfilApi::Configuration.new(circuit_breaker: { failure_threshold: 3 })
-
-      assert_equal 3, config.circuit_breaker[:failure_threshold]
-      assert_equal Configuration::DEFAULT_CIRCUIT_BREAKER_OPTIONS[:cool_down], config.circuit_breaker[:cool_down]
-    end
-
-    def test_circuit_breaker_turns_off_when_assigned_false
-      config = FulfilApi::Configuration.new(circuit_breaker: true)
-      config.circuit_breaker = false
-
-      assert_nil config.circuit_breaker
-    end
-
     def test_connection_options_merge_over_defaults
       config = FulfilApi::Configuration.new(connection_options: { idle_timeout: 2 })
 
