@@ -113,6 +113,9 @@ module FulfilApi
           configure_persistent_connection(http)
         end
 
+        # Retries and other safeguards wrap every request, so they're added first
+        FulfilApi::Middleware.apply(connection, configuration)
+
         # Configuration of the request middleware
         connection.request :json
 
@@ -136,11 +139,9 @@ module FulfilApi
     # Tunes the underlying Net::HTTP::Persistent connection.
     #
     # The `net_http_persistent` adapter forces `max_retries` to 0 on every
-    #   request, which disables Ruby's built-in retry for idempotent requests.
-    #   Restoring it lets a stale keep-alive socket — one the server has already
-    #   closed — be retried transparently on a fresh socket instead of surfacing
-    #   as a read timeout. The config block runs after the adapter zeroes the
-    #   value, so this takes effect.
+    #   request. Retries are handled by {FulfilApi::Middleware::Retry} instead, so
+    #   `max_retries` is only restored when it's configured explicitly. The config
+    #   block runs after the adapter zeroes the value, so this takes effect.
     #
     # @param http [Net::HTTP::Persistent] The live persistent connection.
     # @return [void]
@@ -155,7 +156,10 @@ module FulfilApi
 
     # @return [Array] The cache key identifying a unique connection.
     def connection_cache_key
-      [configuration.merchant_id, configuration.request_options, configuration.connection_options]
+      [
+        configuration.merchant_id, configuration.request_options, configuration.connection_options,
+        configuration.retry_options, configuration.circuit_breaker
+      ]
     end
 
     # @param relative_path [String] The relative path to the API endpoint.

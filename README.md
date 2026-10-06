@@ -57,7 +57,7 @@ This makes it easy to use different settings in contexts with different constrai
 ```ruby
 FulfilApi.with_config(
   request_options: { open_timeout: 5, read_timeout: 60, write_timeout: 30 },
-  connection_options: { max_retries: 3, idle_timeout: 10 }
+  retry_options: { max_retries: 3 }
 ) do
   # Long-running work against the Fulfil API
 end
@@ -77,12 +77,50 @@ The following configuration options are (currently) available throught both conf
 
 > **NOTE:** With the persistent (keep-alive) adapter there is no single whole-request `timeout`; Faraday resolves `read_timeout`, `open_timeout`, and `write_timeout` independently. `read_timeout` is the value that governs a slow or stalled response.
 
+- `retry_options` (`Hash`): Which requests [`faraday-retry`](https://github.com/lostisland/faraday-retry) retries when they fail before Fulfil answers them (a dropped keep-alive socket, a refused connection or a timeout). An error response from Fulfil is never retried. Supported keys:
+  - `max_retries` (default `1`): The maximum number of retries per request.
+  - `requests` (default: every `GET`, and `PUT` requests to `search_read` and `search_count`): A hash of HTTP verbs, each mapped to `true` for every endpoint or to a list of patterns matched against the request path. Fulfil reads through `PUT` as well as writes through it, so only the read endpoints are retried by default. Retrying a write that timed out could apply it twice.
+
+```ruby
+FulfilApi.configure do |config|
+  config.retry_options = {
+    max_retries: 2,
+    requests: { get: true, put: [%r{/search_read\z}, %r{/search_count\z}, %r{/model/sale\.sale/\d+\z}] }
+  }
+end
+```
+
+- `circuit_breaker` (`Faulty`, optional): A [Faulty](https://github.com/ParentSquare/faulty) instance to stop sending requests to a Fulfil instance that keeps failing. Off by default. See [Stopping requests to a failing Fulfil instance](#stopping-requests-to-a-failing-fulfil-instance).
+
 - `connection_options` (`Hash`): Tuning for the persistent (keep-alive) connection. Supported keys:
-  - `max_retries` (default `1`): Re-enables Ruby's built-in retry for **idempotent** requests (`GET`/`HEAD`/`PUT`/`DELETE`/`OPTIONS`). The `net_http_persistent` adapter disables this by forcing it to `0`, which makes a keep-alive socket the server has already dropped surface as a read timeout instead of being retried transparently on a fresh socket. `POST` is never auto-retried, so this is side-effect safe. Set to `0` to restore the adapter's default behaviour.
+  - `max_retries` (optional): Re-enables Ruby's built-in retry, which retries **every** idempotent request (`GET`/`HEAD`/`PUT`/`DELETE`/`OPTIONS`) whatever its endpoint, writes through `PUT` included. Off by default; prefer `retry_options`.
   - `idle_timeout` (`Integer`, optional): Seconds a pooled socket may sit idle before it is recycled. Lower this towards your server's keep-alive window to shrink the stale-socket window for non-idempotent requests.
   - `pool_size` (`Integer`, optional): Maximum number of concurrent connections kept in the pool.
 
 > **NOTE:** When retries are enabled, the worst-case time for a request is roughly `(max_retries + 1) × read_timeout`. On platforms with a hard request cap (e.g. Heroku's 30s router limit), keep `read_timeout` low enough that this product stays under the cap.
+
+### Stopping requests to a failing Fulfil instance
+
+An application that talks to several Fulfil instances shouldn't let one struggling instance tie up all of its threads. The gem can run every request through a [Faulty](https://github.com/ParentSquare/faulty) circuit breaker. Faulty isn't a dependency of the gem, so add it to your own `Gemfile` first:
+
+```ruby
+gem "faulty"
+```
+
+Then hand the gem a Faulty instance. Its `circuit_defaults` set the thresholds, and its storage decides whether the state is kept per process (in memory) or shared between processes (e.g. Redis):
+
+```ruby
+FulfilApi.configure do |config|
+  config.circuit_breaker = Faulty.new(
+    storage: Faulty::Storage::Redis.new(client: Redis.new),
+    circuit_defaults: { rate_threshold: 0.5, sample_threshold: 5, cool_down: 60 }
+  )
+end
+```
+
+Every Fulfil instance gets its own circuit, so one failing instance never stops requests to another. The `Client` and the `TplClient` of the same instance share a circuit. Timeouts, dropped connections and 5xx responses count as failures. A 4xx response is an answer and doesn't count, and a request that failed after retrying counts once.
+
+While a circuit is closed, failed requests raise the same `FulfilApi::HttpError` they always do. Once it opens, requests raise a `FulfilApi::CircuitOpen` without touching the network, until Faulty's cool-down lets a test request through.
 
 ### Querying the Fulfil API
 

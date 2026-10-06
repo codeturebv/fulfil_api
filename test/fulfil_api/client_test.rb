@@ -276,12 +276,24 @@ module FulfilApi
       assert_requested :get, %r{sale\.sale/123}i, headers: { "X-Api-Key" => second_token.value }, times: 1
     end
 
-    def test_restores_max_retries_on_the_persistent_connection_by_default
+    def test_leaves_max_retries_of_the_persistent_connection_alone_by_default
       persistent = Net::HTTP::Persistent.new
+      persistent.max_retries = 0
 
       @client.send(:configure_persistent_connection, persistent)
 
-      assert_equal 1, persistent.max_retries
+      assert_equal 0, persistent.max_retries
+    end
+
+    def test_builds_separate_connections_for_different_retry_options
+      FulfilApi::Client.reset_connection_cache!
+
+      first_client = FulfilApi::Client.new(FulfilApi::Configuration.new(merchant_id: @merchant_id))
+      second_client = FulfilApi::Client.new(
+        FulfilApi::Configuration.new(merchant_id: @merchant_id, retry_options: { max_retries: 3 })
+      )
+
+      refute_same first_client.send(:connection), second_client.send(:connection)
     end
 
     def test_applies_custom_idle_timeout_and_max_retries_to_the_persistent_connection

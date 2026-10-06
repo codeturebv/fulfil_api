@@ -21,11 +21,33 @@ module FulfilApi
       assert_equal Configuration::DEFAULT_CONNECTION_OPTIONS, @config.connection_options
     end
 
+    def test_default_retry_options
+      assert_equal Configuration::DEFAULT_RETRY_OPTIONS, @config.retry_options
+    end
+
+    def test_circuit_breaker_is_off_by_default
+      assert_nil @config.circuit_breaker
+    end
+
     def test_connection_options_merge_over_defaults
       config = FulfilApi::Configuration.new(connection_options: { idle_timeout: 2 })
 
       assert_equal 2, config.connection_options[:idle_timeout]
-      assert_equal 1, config.connection_options[:max_retries]
+      assert_nil config.connection_options[:max_retries]
+    end
+
+    def test_retry_options_merge_over_defaults
+      config = FulfilApi::Configuration.new(retry_options: { max_retries: 3 })
+
+      assert_equal 3, config.retry_options[:max_retries]
+      assert_equal Configuration::DEFAULT_RETRY_OPTIONS[:requests], config.retry_options[:requests]
+    end
+
+    def test_retry_options_reset_to_defaults_when_assigned_nil
+      config = FulfilApi::Configuration.new(retry_options: { max_retries: 3 })
+      config.retry_options = nil
+
+      assert_equal Configuration::DEFAULT_RETRY_OPTIONS, config.retry_options
     end
 
     def test_connection_options_allow_overriding_defaults

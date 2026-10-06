@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+- Add an optional circuit breaker, backed by [Faulty](https://github.com/ParentSquare/faulty), that stops sending requests to a Fulfil instance that keeps failing, so a struggling instance can't tie up every thread of an application that talks to several of them. Pass a `Faulty` instance as `circuit_breaker`; each Fulfil instance gets its own circuit, and while it's open requests raise a `FulfilApi::CircuitOpen` without touching the network.
+
+- Retry only the requests that are safe to retry. Ruby's built-in retry treated every `PUT` as idempotent, but Fulfil writes through `PUT` too (updating a record, holding a shipment), so a write that timed out could be sent twice. Retries now run through `faraday-retry`, configured to only retry `GET` requests and `PUT` requests to `search_read` and `search_count` by default, configurable through the new `retry_options`. The built-in retry is off by default again; `connection_options: { max_retries: ... }` still turns it on.
+
 - Expand a nested field into its relation even when the field carries the same name as the relation it hangs off. Selecting both `tracking_number` and `tracking_number.tracking_number` on a shipment used to drop the relation and leave the tracking number as a plain string on the shipment itself, because the gem decided where a field belonged by matching names in the path instead of counting positions.
 
 - Publish an `ActiveSupport::Notifications` event named `error.fulfil_api` whenever a `FulfilApi::Error` is raised, so an application can report failures of the Fulfil API to its APM without rescuing every call into the gem. Subscribe with `FulfilApi.on_error { |error| ... }`, or through `ActiveSupport::Notifications` directly to also reach the status code, response body and response headers of a `FulfilApi::HttpError`.
