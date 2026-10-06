@@ -10,6 +10,9 @@ module FulfilApi
     #   holding a shipment). Retrying a write that timed out could apply it twice, so
     #   the endpoints are matched explicitly instead.
     #
+    # A request is not retried once the deadline of {FulfilApi.with_deadline} has run
+    #   out; the original error is raised instead.
+    #
     # @see FulfilApi::Configuration::DEFAULT_RETRY_OPTIONS
     class Retry < Faraday::Middleware
       # The errors raised when a request never got an answer from Fulfil. An HTTP
@@ -33,7 +36,7 @@ module FulfilApi
         begin
           @app.call(env)
         rescue *RETRYABLE_ERRORS
-          raise unless retries < max_retries && retryable?(env)
+          raise unless retries < max_retries && retryable?(env) && !deadline_expired?
 
           retries += 1
           env.body = request_body
@@ -44,6 +47,11 @@ module FulfilApi
       private
 
       attr_reader :max_retries, :requests
+
+      # @return [true, false]
+      def deadline_expired?
+        FulfilApi::Deadline.current&.expired? || false
+      end
 
       # @param env [Faraday::Env] The environment of the request.
       # @return [true, false] Whether the endpoint of the request is safe to retry.

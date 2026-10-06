@@ -71,6 +71,8 @@ The following configuration options are (currently) available throught both conf
 
 > **NOTE:** To use an OAuth access token, use `FulfilApi::AccessToken.new(oauth_token, type: :oauth)`. Typically, you would use the OAuth access token only when using the [dynamic configuration](#using-a-dynamic-configuration) mode of the gem.
 
+- `deadline` (`Numeric`, optional): The default time budget in seconds for `FulfilApi.with_deadline`. See [Failing fast with a deadline](#failing-fast-with-a-deadline).
+
 - `merchant_id` (`String`): The `merchant_id` is the subdomain that the Fulfil instance is hosted on. This configuration option is required to be able to query Fulfil's API endpoints.
 
 - `request_options` (`Hash`): The `request_options` are the per-request timeout options for the HTTP client. See [https://lostisland.github.io/faraday/#/customization/request-options](https://lostisland.github.io/faraday/#/customization/request-options) in `faraday`.
@@ -96,6 +98,21 @@ end
   - `pool_size` (`Integer`, optional): Maximum number of concurrent connections kept in the pool.
 
 > **NOTE:** When retries are enabled, the worst-case time for a request is roughly `(max_retries + 1) × read_timeout`. On platforms with a hard request cap (e.g. Heroku's 30s router limit), keep `read_timeout` low enough that this product stays under the cap.
+
+### Failing fast with a deadline
+
+A web request that makes several calls to Fulfil can wait on it for a long time when Fulfil is slow, because the timeouts apply to each request separately. `FulfilApi.with_deadline` puts a time budget around the whole unit of work. Once the budget runs out, no further requests are sent and a `FulfilApi::Deadline::Exceeded` is raised instead. Requests that fail after the budget ran out aren't retried either.
+
+```ruby
+FulfilApi.with_deadline(3) do
+  shipments = FulfilApi::Resource.set(model_name: "stock.shipment.out").where(["sales.channel_identifier", "=", "1001"]).to_a
+  moves = FulfilApi::Resource.set(model_name: "stock.move").where(["shipment", "in", shipments.map(&:id)]).to_a
+end
+```
+
+Without an argument, `with_deadline` uses the configured `deadline`, and runs the block without a deadline when that's not set either. A nested deadline can shorten the one around it but never extend it.
+
+> **NOTE:** The deadline decides whether a request may start, not how long it may take. A request that starts just before the budget runs out is still bound by its own `request_options`, so the worst case is the deadline plus one request's timeouts. Pair a deadline with tight `request_options` (through `FulfilApi.with_config`) where that matters.
 
 ### Querying the Fulfil API
 

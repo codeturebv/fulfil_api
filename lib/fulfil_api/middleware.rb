@@ -12,6 +12,7 @@ module FulfilApi
     # @return [void]
     def self.apply(connection, configuration)
       connection.use Retry, configuration.retry_options
+      connection.use Deadline
     end
   end
 end

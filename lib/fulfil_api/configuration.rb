@@ -6,7 +6,7 @@ module FulfilApi
   # This model holds configuration settings and provides thread-safe access
   #   to these settings.
   class Configuration
-    attr_accessor :access_token, :api_version, :merchant_id, :request_options, :tpl
+    attr_accessor :access_token, :api_version, :deadline, :merchant_id, :request_options, :tpl
     attr_reader :connection_options, :retry_options
 
     DEFAULT_API_VERSION = "v2"
