@@ -5,7 +5,10 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in fulfil.gemspec
 gemspec
 
-gem "faulty", "~> 0.13" # Fault-tolerance tools for Ruby based on circuit-breakers. [https://github.com/ParentSquare/faulty]
+# Faulty requires Ruby 3.1+, so its tests are skipped on Ruby 3.0
+if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.1")
+  gem "faulty", "~> 0.13" # Fault-tolerance tools for Ruby based on circuit-breakers. [https://github.com/ParentSquare/faulty]
+end
 
 gem "minitest", "~> 5.16" # A complete suite of testing facilities supporting TDD. [https://github.com/minitest/minitest]
 gem "minitest-reporters", "~> 1.7" # Enhance the default minitest reporter. [https://github.com/minitest-reporters/minitest-reporters]

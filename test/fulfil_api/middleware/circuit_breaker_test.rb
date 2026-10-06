@@ -1,13 +1,20 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "faulty"
 require "minitest/mock"
+
+begin
+  require "faulty"
+rescue LoadError
+  # Faulty requires Ruby 3.1+, see the Gemfile
+end
 
 module FulfilApi
   module Middleware
     class CircuitBreakerTest < Minitest::Test
       def setup
+        skip "Faulty isn't available on Ruby #{RUBY_VERSION}" unless defined?(Faulty)
+
         @merchant_id = "merchant-#{SecureRandom.uuid}"
         @faulty = Faulty.new(
           storage: Faulty::Storage::Memory.new,
