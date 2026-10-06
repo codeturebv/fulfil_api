@@ -19,5 +19,12 @@ require "rails/test_help"
 ActiveRecord::Migration.verbose = false
 require_relative "dummy/db/schema"
 
+# The engine's controllers pick their parent class the moment they load, the
+#   way they would when a host application boots. Load them while the dummy
+#   application's parent controller is configured, so a test that unsets it to
+#   check the flow refuses to run can't leave them inheriting from the
+#   placeholder for the rest of the run.
+FulfilApi::InstallationsController.name
+
 # Load all support files for the unit tests
 Dir[File.expand_path("support/**/*.rb", __dir__)].each { |file| require file }
