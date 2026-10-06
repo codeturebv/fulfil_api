@@ -77,7 +77,7 @@ The following configuration options are (currently) available throught both conf
 
 > **NOTE:** With the persistent (keep-alive) adapter there is no single whole-request `timeout`; Faraday resolves `read_timeout`, `open_timeout`, and `write_timeout` independently. `read_timeout` is the value that governs a slow or stalled response.
 
-- `retry_options` (`Hash`): Which requests are retried when they fail before Fulfil answers them (a dropped keep-alive socket, a refused connection or a timeout). An error response from Fulfil is never retried. Supported keys:
+- `retry_options` (`Hash`): Which requests [`faraday-retry`](https://github.com/lostisland/faraday-retry) retries when they fail before Fulfil answers them (a dropped keep-alive socket, a refused connection or a timeout). An error response from Fulfil is never retried. Supported keys:
   - `max_retries` (default `1`): The maximum number of retries per request.
   - `requests` (default: every `GET`, and `PUT` requests to `search_read` and `search_count`): A hash of HTTP verbs, each mapped to `true` for every endpoint or to a list of patterns matched against the request path. Fulfil reads through `PUT` as well as writes through it, so only the read endpoints are retried by default. Retrying a write that timed out could apply it twice.
 
