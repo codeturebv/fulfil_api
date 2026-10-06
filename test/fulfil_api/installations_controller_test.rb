@@ -81,6 +81,22 @@ module FulfilApi
       assert_equal "bot-1234", installation.offline_access_token
     end
 
+    test "the callback installs on the workspace the flow started on" do
+      install(merchant_id: "other")
+
+      assert_equal "other", Installation.global.sole.merchant_id
+      assert_requested :post, %r{other\.fulfil\.io/oauth/token}
+    end
+
+    test "the callback records the installation against the tenant of the parent controller" do
+      shop = Shop.create!(name: "Other", fulfil_merchant_id: "other")
+
+      install(shop_id: shop.id)
+
+      assert_equal shop, Installation.sole.owner
+      assert_equal "other", Installation.sole.merchant_id
+    end
+
     test "the callback returns the user to where they came from" do
       install(return_to: "/sales_orders")
 
@@ -136,7 +152,7 @@ module FulfilApi
     private
 
     def install(**options)
-      get "/fulfil/installation/new", params: options.slice(:merchant_id, :return_to)
+      get "/fulfil/installation/new", params: options.slice(:merchant_id, :return_to, :shop_id)
       get "/fulfil/callback", params: { code: "the-code", state: session[InstallationsController::STATE_SESSION_KEY] }
     end
 
