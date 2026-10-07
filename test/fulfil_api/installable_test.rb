@@ -8,13 +8,6 @@ module FulfilApi
       @shop = Shop.create!(name: "Other", fulfil_merchant_id: "other")
     end
 
-    def token(**payload)
-      FulfilApi::OAuth::Token.new(
-        { "access_token" => "user-1234", "offline_access_token" => "bot-1234", "token_type" => "Bearer" }
-          .merge(payload.transform_keys(&:to_s))
-      )
-    end
-
     test "fulfil_installed? is false without an installation" do
       assert_not @shop.fulfil_installed?
     end
@@ -54,6 +47,15 @@ module FulfilApi
       assert_difference -> { Installation.count }, -1 do
         @shop.destroy
       end
+    end
+
+    private
+
+    def token(**payload)
+      FulfilApi::OAuth::Token.new(
+        { "access_token" => "user-1234", "offline_access_token" => "bot-1234", "token_type" => "Bearer" }
+          .merge(payload.transform_keys(&:to_s))
+      )
     end
   end
 end

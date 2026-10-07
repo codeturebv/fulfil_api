@@ -4,19 +4,6 @@ require "test_helper"
 
 module FulfilApi
   class InstallationTest < ActiveSupport::TestCase
-    def token(**payload)
-      FulfilApi::OAuth::Token.new(
-        {
-          "access_token" => "user-1234",
-          "associated_user" => { "email" => "first.last@example.com", "id" => 7, "name" => "First Last" },
-          "expires_in" => 3600,
-          "offline_access_token" => "bot-1234",
-          "scope" => ["sale.sale"],
-          "token_type" => "Bearer"
-        }.merge(payload.transform_keys(&:to_s))
-      )
-    end
-
     test "install records the granted token" do
       assert_difference -> { Installation.count }, +1 do
         Installation.install token, merchant_id: "acme"
@@ -178,6 +165,21 @@ module FulfilApi
       assert_no_changes -> { FulfilApi.configuration.merchant_id }, from: "acme" do
         installation.with_config { |client| client }
       end
+    end
+
+    private
+
+    def token(**payload)
+      FulfilApi::OAuth::Token.new(
+        {
+          "access_token" => "user-1234",
+          "associated_user" => { "email" => "first.last@example.com", "id" => 7, "name" => "First Last" },
+          "expires_in" => 3600,
+          "offline_access_token" => "bot-1234",
+          "scope" => ["sale.sale"],
+          "token_type" => "Bearer"
+        }.merge(payload.transform_keys(&:to_s))
+      )
     end
   end
 end
