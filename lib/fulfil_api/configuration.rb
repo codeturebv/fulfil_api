@@ -7,7 +7,7 @@ module FulfilApi
   #   to these settings.
   class Configuration
     attr_accessor :access_token, :api_version, :merchant_id, :request_options, :tpl
-    attr_reader :connection_options, :retry_options
+    attr_reader :connection_options, :oauth, :retry_options
 
     # @!attribute [rw] circuit_breaker
     #   @return [Faulty, nil] The Faulty instance that runs every request through a
@@ -69,6 +69,20 @@ module FulfilApi
       @connection_options = DEFAULT_CONNECTION_OPTIONS.merge(options || {})
     end
 
+    # Assigns the credentials of the OAuth app that was registered in Fulfil's
+    #   authentication dashboard. Assigning `nil` resets to the defaults.
+    #
+    # @param options [Hash, FulfilApi::OAuth::Configuration, nil] The OAuth options to apply.
+    # @return [void]
+    def oauth=(options)
+      @oauth =
+        case options
+        when OAuth::Configuration then options
+        when Hash, NilClass then OAuth::Configuration.new(options)
+        else raise ArgumentError, "Expected Hash or FulfilApi::OAuth::Configuration, got #{options.class} instead"
+        end
+    end
+
     # Merges the provided retry options over the defaults. Assigning `nil` resets
     #   to the defaults.
     #
@@ -86,6 +100,18 @@ module FulfilApi
 
     private
 
+    # {FulfilApi.with_config} duplicates the active configuration, which would
+    #   otherwise share the very same OAuth configuration object with the copy.
+    #   A block that changes an OAuth option would then leak that change into
+    #   the configuration it was supposed to be reverted to.
+    #
+    # @param source [FulfilApi::Configuration] The configuration being copied.
+    # @return [void]
+    def initialize_copy(source)
+      super
+      @oauth = source.oauth.dup
+    end
+
     # Sets the default options for the gem configuration.
     #
     # This method is called during initialization to ensure all configuration
@@ -96,6 +122,7 @@ module FulfilApi
       self.api_version = DEFAULT_API_VERSION if api_version.nil?
       self.request_options = DEFAULT_REQUEST_OPTIONS if request_options.nil?
       self.connection_options = nil if connection_options.nil?
+      self.oauth = nil if oauth.nil?
       self.retry_options = nil if retry_options.nil?
     end
   end
