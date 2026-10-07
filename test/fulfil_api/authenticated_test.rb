@@ -4,13 +4,6 @@ require "test_helper"
 
 module FulfilApi
   class AuthenticatedTest < ActionDispatch::IntegrationTest
-    def token(**payload)
-      FulfilApi::OAuth::Token.new(
-        { "access_token" => "user-1234", "offline_access_token" => "bot-1234", "token_type" => "Bearer" }
-          .merge(payload.transform_keys(&:to_s))
-      )
-    end
-
     test "sends a user without an installation through the OAuth flow" do
       get "/sales_orders"
 
@@ -60,6 +53,15 @@ module FulfilApi
 
       assert_redirected_to "/fulfil/installation/new?merchant_id=other" \
                            "&return_to=%2Fshop_sales_orders%3Fshop_id%3D#{shop.id}"
+    end
+
+    private
+
+    def token(**payload)
+      FulfilApi::OAuth::Token.new(
+        { "access_token" => "user-1234", "offline_access_token" => "bot-1234", "token_type" => "Bearer" }
+          .merge(payload.transform_keys(&:to_s))
+      )
     end
   end
 end
