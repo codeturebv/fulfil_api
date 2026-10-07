@@ -153,10 +153,6 @@ module FulfilApi
         }
       end
 
-      # OAuth 2.0 expects the same redirect URI the consent screen was opened
-      #   with whenever one was sent, so a code can't be redeemed for a
-      #   different callback than the one it was issued to.
-      #
       # @param code [String] The authorization code Fulfil sent to the callback.
       # @return [Hash]
       def token_parameters(code)
