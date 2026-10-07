@@ -5,17 +5,6 @@ require "test_helper"
 module FulfilApi
   module OAuth
     class TokenTest < Minitest::Test
-      def offline_payload
-        {
-          "access_token" => "user-1234",
-          "associated_user" => { "email" => "first.last@example.com", "id" => 1, "name" => "First Last" },
-          "expires_in" => 3600,
-          "offline_access_token" => "bot-1234",
-          "scope" => ["user_session,sale.sale"],
-          "token_type" => "Bearer"
-        }
-      end
-
       def test_reads_the_granted_token
         token = Token.new(offline_payload)
 
@@ -65,6 +54,19 @@ module FulfilApi
 
       def test_defaults_to_a_bearer_token_type
         assert_equal Token::DEFAULT_TOKEN_TYPE, Token.new({}).token_type
+      end
+
+      private
+
+      def offline_payload
+        {
+          "access_token" => "user-1234",
+          "associated_user" => { "email" => "first.last@example.com", "id" => 1, "name" => "First Last" },
+          "expires_in" => 3600,
+          "offline_access_token" => "bot-1234",
+          "scope" => ["user_session,sale.sale"],
+          "token_type" => "Bearer"
+        }
       end
     end
   end

@@ -15,10 +15,6 @@ module FulfilApi
         }
       end
 
-      def authorization(**)
-        Authorization.new(configuration: @configuration, **)
-      end
-
       def test_generates_a_unique_state
         refute_equal Authorization.generate_state, Authorization.generate_state
       end
@@ -141,6 +137,10 @@ module FulfilApi
             body: { access_token: "user-1234", expires_in: 3600, token_type: "Bearer" }.merge(payload).to_json,
             headers: { "Content-Type" => "application/json" }
           )
+      end
+
+      def authorization(**)
+        Authorization.new(configuration: @configuration, **)
       end
     end
   end
