@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Send the `grant_type` and `redirect_uri` in the form body when exchanging an authorization code, the way OAuth 2.0 defines the token request. The grant type used to travel in the query string and the redirect URI was left out, which Fulfil accepts today but isn't required to.
+
 - Require Rails 8.0 and Ruby 3.2 or newer. Every application using the gem is on Rails 8 already, so carrying support for older versions bought nothing.
 
 - Add support for Fulfil's OAuth 2.0 authorization flow, so applications no longer depend on personal access tokens now that Fulfil caps their lifetime. `FulfilApi::OAuth::Authorization` builds the consent screen URL and exchanges the authorization code for a token, and `config.oauth` holds the OAuth app's credentials.

@@ -97,6 +97,31 @@ module FulfilApi
         end
       end
 
+      def test_sends_the_grant_type_and_redirect_uri_in_the_form_body
+        stub_token_request
+
+        authorization.exchange("the-code")
+
+        assert_requested :post, "https://acme.fulfil.io/oauth/token" do |request|
+          URI.decode_www_form(request.body).to_h == {
+            "code" => "the-code",
+            "grant_type" => "authorization_code",
+            "redirect_uri" => "https://example.com/fulfil/callback"
+          }
+        end
+      end
+
+      def test_leaves_the_redirect_uri_out_of_the_form_body_when_there_is_none
+        @configuration.oauth.redirect_uri = nil
+        stub_token_request
+
+        authorization.exchange("the-code")
+
+        assert_requested :post, "https://acme.fulfil.io/oauth/token" do |request|
+          !URI.decode_www_form(request.body).to_h.key?("redirect_uri")
+        end
+      end
+
       def test_identifies_the_client_with_basic_authentication
         stub_token_request
 
