@@ -96,8 +96,7 @@ module FulfilApi
       def exchange(code)
         raise TokenExchangeFailed, "No authorization code was provided" if code.blank?
 
-        response = connection.post(TOKEN_PATH, { code: code }) do |request|
-          request.params["grant_type"] = "authorization_code"
+        response = connection.post(TOKEN_PATH, token_parameters(code)) do |request|
           request.headers["Authorization"] = "Basic #{basic_credentials}"
         end
 
@@ -152,6 +151,16 @@ module FulfilApi
           response_headers: exception.response_headers,
           response_status: exception.response_status
         }
+      end
+
+      # @param code [String] The authorization code Fulfil sent to the callback.
+      # @return [Hash]
+      def token_parameters(code)
+        {
+          code: code,
+          grant_type: "authorization_code",
+          redirect_uri: redirect_uri
+        }.compact
       end
 
       # @param state [String] The nonce to verify the callback with.
