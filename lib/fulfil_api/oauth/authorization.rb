@@ -164,7 +164,7 @@ module FulfilApi
           response_type: "code",
           state: state
         }.tap do |parameters|
-          parameters[:scope] = scopes.join(",") if scopes.any?
+          parameters[:scope] = scopes.join(" ") if scopes.any?
         end.compact
       end
     end

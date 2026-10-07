@@ -70,8 +70,12 @@ module FulfilApi
         assert_equal "offline_access", url_parameters(authorization.url(state: "nonce"))["access_type"]
       end
 
-      def test_joins_the_scopes_the_way_fulfil_expects
-        assert_equal "sale.sale,product.product", url_parameters(authorization.url(state: "nonce"))["scope"]
+      def test_separates_the_scopes_with_spaces
+        assert_equal "sale.sale product.product", url_parameters(authorization.url(state: "nonce"))["scope"]
+      end
+
+      def test_encodes_the_spaces_between_the_scopes_in_the_url
+        assert_includes authorization.url(state: "nonce"), "scope=sale.sale+product.product"
       end
 
       def test_omits_the_scope_when_no_scopes_are_requested
