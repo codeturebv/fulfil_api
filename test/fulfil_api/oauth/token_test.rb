@@ -32,6 +32,12 @@ module FulfilApi
         assert_equal %w[user_session sale.sale], token.scopes
       end
 
+      def test_flattens_the_space_separated_scopes_a_workspace_grants
+        token = Token.new(offline_payload.merge("scope" => ["sale.order stock.move.view  stock.location.view"]))
+
+        assert_equal %w[sale.order stock.move.view stock.location.view], token.scopes
+      end
+
       def test_prefers_the_permanent_token_over_the_short_lived_one
         assert_equal "bot-1234", Token.new(offline_payload).value
         assert_equal "user-1234", Token.new(offline_payload.except("offline_access_token")).value
