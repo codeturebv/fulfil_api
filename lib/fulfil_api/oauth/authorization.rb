@@ -164,7 +164,10 @@ module FulfilApi
           response_type: "code",
           state: state
         }.tap do |parameters|
-          parameters[:scope] = scopes.join(",") if scopes.any?
+          # Fulfil reads the scopes as a space separated list, the way OAuth
+          #   2.0 defines them. A comma separated list isn't recognized, and
+          #   Fulfil grants everything the approving user can do instead.
+          parameters[:scope] = scopes.join(" ") if scopes.any?
         end.compact
       end
     end
