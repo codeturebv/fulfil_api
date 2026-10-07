@@ -11,6 +11,7 @@ if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.1")
 end
 
 gem "minitest", "~> 6.0" # A complete suite of testing facilities supporting TDD. [https://github.com/minitest/minitest]
+gem "minitest-mock", "~> 5.27" # A beautifully tiny mock (and stub) object framework. [https://github.com/minitest/minitest-mock]
 gem "minitest-reporters", "~> 1.7" # Enhance the default minitest reporter. [https://github.com/minitest-reporters/minitest-reporters]
 
 gem "rake", "~> 13.0"
