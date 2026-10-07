@@ -15,6 +15,7 @@ module FulfilApi
     #   }
     class Token
       DEFAULT_TOKEN_TYPE = "Bearer"
+      SCOPE_SEPARATOR = /[\s,]+/
 
       attr_reader :access_token, :associated_user, :expires_in, :offline_access_token, :scopes, :token_type
 
@@ -61,14 +62,16 @@ module FulfilApi
 
       private
 
-      # Fulfil returns the granted scopes as an array holding a single comma
-      #   separated string (`["user_session,party.party"]`) rather than as a
-      #   list of scopes, so both shapes are flattened into a plain list.
+      # Fulfil returns the granted scopes as an array holding a single string
+      #   rather than as a list of scopes. Its docs show that string comma
+      #   separated (`["user_session,party.party"]`), but a real workspace
+      #   separates them with spaces (`["sale.order stock.move.view"]`), so both
+      #   are flattened into a plain list.
       #
       # @param scope [Array<String>, String, nil] The granted scopes.
       # @return [Array<String>]
       def extract_scopes(scope)
-        Array(scope).flat_map { |value| value.to_s.split(",") }.map(&:strip).reject(&:empty?).uniq
+        Array(scope).flat_map { |value| value.to_s.split(SCOPE_SEPARATOR) }.reject(&:empty?).uniq
       end
     end
   end

@@ -76,11 +76,11 @@ module FulfilApi
         parent_controller.present?
       end
 
-      # @param value [Array<String>, String, nil] A list of scopes, or a comma
-      #   separated string of scopes.
+      # @param value [Array<String>, String, nil] A list of scopes, or a string
+      #   of scopes separated by commas or spaces.
       # @return [void]
       def scopes=(value)
-        @scopes = Array(value).flat_map { |scope| scope.to_s.split(",") }.map(&:strip).reject(&:empty?).uniq
+        @scopes = Array(value).flat_map { |scope| scope.to_s.split(Token::SCOPE_SEPARATOR) }.reject(&:empty?).uniq
       end
 
       private
