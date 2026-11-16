@@ -128,7 +128,9 @@ While a circuit is closed, failed requests raise the same `FulfilApi::HttpError`
 
 ### Cooling down after a rate limit
 
-Fulfil answers with a 429 when an application sends too many requests, and the limits aren't published (they differ per merchant). Once one request is rate limited, sending more right away only earns more 429s. The gem can share a cooldown across every thread and process instead: the first 429 starts it, and until it has passed, requests to that Fulfil instance raise the same `FulfilApi::HttpError::TooManyRequests` without being sent.
+Fulfil limits how many requests an application can send with the same credentials, and reports the budget on every response: `x-ratelimit-limit` (the tokens in the budget), `x-ratelimit-remaining` (the tokens left) and `x-ratelimit-reset` (the epoch second it resets at). Every thread and process using the same credentials draws from that one budget, so once it's spent, sending more right away only earns 429s.
+
+The gem can share a cooldown across all of them instead. Once a response says the budget is spent, or a request gets a 429, the cooldown starts, and until the budget resets, requests to that Fulfil instance raise the same `FulfilApi::HttpError::TooManyRequests` without being sent.
 
 ```ruby
 FulfilApi.configure do |config|
@@ -136,7 +138,7 @@ FulfilApi.configure do |config|
 end
 ```
 
-The cooldown lasts as long as Fulfil's `Retry-After` header asks, or two seconds when it doesn't say, and never longer than 30 seconds. A refused request carries the seconds left in its `retry-after` header, so `in_batches` (and `find_each`) wait just long enough before retrying. Use a store every process shares, like Redis, for the cooldown to reach all of them; a memory store only covers the threads of one process.
+The cooldown lasts until Fulfil's rate limit resets (or as long as a `Retry-After` header asks), two seconds when Fulfil doesn't say, and never longer than 30 seconds. A refused request carries the seconds left in its `retry-after` header, so `in_batches` (and `find_each`) wait just long enough before retrying. Use a store every process shares, like Redis, for the cooldown to reach all of them; a memory store only covers the threads of one process.
 
 ### Authenticating with OAuth (Rails)
 

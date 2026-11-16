@@ -87,6 +87,43 @@ module FulfilApi
         assert_equal({ "id" => 123 }, build_client(other_merchant_id, @store).get("sale.sale/123"))
       end
 
+      def test_cools_down_before_fulfil_rate_limits_once_the_budget_is_spent
+        stub_request(:get, /sale\.sale/).to_return(
+          status: 200, body: { id: 123 }.to_json,
+          headers: { "Content-Type" => "application/json", "X-RateLimit-Remaining" => "0",
+                     "X-RateLimit-Reset" => (Time.now.to_i + 2).to_s }
+        )
+
+        assert_equal({ "id" => 123 }, @client.get("sale.sale/123"))
+        assert_raises(FulfilApi::HttpError::TooManyRequests) { @client.get("sale.sale/123") }
+
+        assert_requested :get, %r{sale\.sale/123}, times: 1
+      end
+
+      def test_keeps_sending_while_the_budget_lasts
+        stub_request(:get, /sale\.sale/).to_return(
+          status: 200, body: { id: 123 }.to_json,
+          headers: { "Content-Type" => "application/json", "X-RateLimit-Remaining" => "3",
+                     "X-RateLimit-Reset" => (Time.now.to_i + 2).to_s }
+        )
+
+        2.times { @client.get("sale.sale/123") }
+
+        assert_requested :get, %r{sale\.sale/123}, times: 2
+      end
+
+      def test_cools_down_until_fulfil_resets_its_rate_limit
+        stub_request(:get, /sale\.sale/).to_return(
+          status: 429, body: "{}",
+          headers: { "X-RateLimit-Remaining" => "0", "X-RateLimit-Reset" => (Time.now.to_i + 9).to_s }
+        )
+        assert_raises(FulfilApi::HttpError::TooManyRequests) { @client.get("sale.sale/123") }
+
+        error = assert_raises(FulfilApi::HttpError::TooManyRequests) { @client.get("sale.sale/123") }
+
+        assert_includes 8..9, error.response_headers["retry-after"].to_i
+      end
+
       private
 
       def build_client(merchant_id, store)

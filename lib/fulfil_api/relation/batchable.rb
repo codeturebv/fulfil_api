@@ -57,9 +57,10 @@ module FulfilApi
       #   end
       #
       # @note the {#in_batches} automatically retries when it encounters a 429
-      #   (TooManyRequests) HTTP error to ensure the lookup can be completed. It waits for as
-      #   long as Fulfil's `Retry-After` header asks, or backs off exponentially (with jitter)
-      #   when there is none, so a rate limited lookup doesn't keep hammering Fulfil.
+      #   (TooManyRequests) HTTP error to ensure the lookup can be completed. It waits until
+      #   Fulfil's rate limit resets (see {FulfilApi::RateLimit.wait}), or backs off
+      #   exponentially (with jitter) when Fulfil doesn't say, so a rate limited lookup
+      #   doesn't keep hammering Fulfil.
       #
       # @param of [Integer] The maximum number of resources in a batch.
       # @param retries [Symbol, Integer] The maximum number of retries before raising.
@@ -108,7 +109,7 @@ module FulfilApi
       # @param error [FulfilApi::HttpError::TooManyRequests] The rate limit error of Fulfil.
       # @return [Numeric] The number of seconds to wait before retrying.
       def retry_wait(attempt, error)
-        requested_wait = retry_after(error)
+        requested_wait = FulfilApi::RateLimit.wait(error.response_headers)
         return [requested_wait, RETRY_MAX_WAIT].min if requested_wait
 
         backoff = [RETRY_BASE_WAIT * (2**(attempt - 1)), RETRY_MAX_WAIT].min
@@ -116,17 +117,6 @@ module FulfilApi
         # Wait somewhere between half and the full backoff, so threads that were rate limited at
         #   the same moment don't all retry at the same moment too.
         backoff * rand(0.5..1.0)
-      end
-
-      # @param error [FulfilApi::HttpError::TooManyRequests]
-      # @return [Integer, nil] The seconds Fulfil asked us to wait, when it said so.
-      def retry_after(error)
-        value = error.response_headers.to_h.find { |name, _| name.to_s.casecmp?("retry-after") }&.last
-        return if value.blank?
-
-        value.to_s.match?(/\A\d+\z/) ? value.to_i : [(Time.httpdate(value.to_s) - Time.now).ceil, 0].max
-      rescue ArgumentError
-        nil
       end
     end
   end

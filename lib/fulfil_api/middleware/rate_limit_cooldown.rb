@@ -3,18 +3,19 @@
 module FulfilApi
   module Middleware
     # The {FulfilApi::Middleware::RateLimitCooldown} keeps every thread and process of an
-    #   application from calling a Fulfil instance that just rate limited one of them.
+    #   application from calling a Fulfil instance whose rate limit is used up.
     #
-    # Fulfil doesn't publish its rate limits, and they differ per merchant, so instead of
-    #   counting requests against a guessed limit, the cooldown reacts to Fulfil itself:
-    #   the first 429 starts a cooldown for that Fulfil instance in a shared store, and
-    #   until it has passed, requests are refused locally with the same 429 instead of
-    #   being sent. The refusal carries a `retry-after` header with the seconds left, so
-    #   the retries of {FulfilApi::Relation::Batchable#in_batches} (and any retry an
-    #   application has for {FulfilApi::HttpError::TooManyRequests}) wait just long enough.
+    # Fulfil's token budget is shared by every request made with the same credentials, and
+    #   it reports what's left on every response (see {FulfilApi::RateLimit}). Once a response
+    #   says the budget is spent, or a request is rate limited with a 429, the cooldown starts
+    #   for that Fulfil instance in a shared store. Until the budget resets, requests are
+    #   refused locally with the same 429 instead of being sent. The refusal carries a
+    #   `retry-after` header with the seconds left, so the retries of
+    #   {FulfilApi::Relation::Batchable#in_batches} (and any retry an application has for
+    #   {FulfilApi::HttpError::TooManyRequests}) wait just long enough.
     #
-    # The cooldown lasts as long as Fulfil's `Retry-After` header asks, or {DEFAULT_WAIT}
-    #   seconds when it doesn't say, and never longer than {MAX_WAIT}. The store is any
+    # The cooldown lasts until Fulfil's rate limit resets, or {DEFAULT_WAIT} seconds when it
+    #   doesn't say, and never longer than {MAX_WAIT}. The store is any
     #   `ActiveSupport::Cache::Store`; use one every process shares (e.g. Redis) for the
     #   cooldown to reach all of them.
     class RateLimitCooldown < Faraday::Middleware
@@ -30,9 +31,9 @@ module FulfilApi
       def call(env)
         refuse!(env) if cooling_down?(env)
 
-        @app.call(env)
+        @app.call(env).on_complete { |response_env| cool_down_when_spent(env, response_env.response_headers) }
       rescue Faraday::TooManyRequestsError => e
-        start_cooldown(env, e) unless refused?(e)
+        start_cooldown(env, e.response_headers) unless refused?(e)
         raise
       end
 
@@ -75,28 +76,27 @@ module FulfilApi
         error.response_headers.to_h.key?("x-fulfil-api-cooldown")
       end
 
+      # Starts the cooldown before Fulfil has to rate limit anyone, once a response says the
+      #   budget is spent.
+      #
+      # @param env [Faraday::Env]
+      # @param headers [Hash, nil] The response headers of Fulfil.
+      # @return [void]
+      def cool_down_when_spent(env, headers)
+        start_cooldown(env, headers) if FulfilApi::RateLimit.remaining(headers)&.zero?
+      end
+
       # Starts (or extends, never shortens) the cooldown of the Fulfil instance.
       #
       # @param env [Faraday::Env]
-      # @param error [Faraday::TooManyRequestsError] The 429 of Fulfil.
+      # @param headers [Hash, nil] The response headers of Fulfil.
       # @return [void]
-      def start_cooldown(env, error)
-        wait = [requested_wait(error) || DEFAULT_WAIT, MAX_WAIT].min
+      def start_cooldown(env, headers)
+        wait = [FulfilApi::RateLimit.wait(headers) || DEFAULT_WAIT, MAX_WAIT].min
         cooldown_until = Time.now.to_f + wait
         return if store.read(cache_key(env)).to_f >= cooldown_until
 
         store.write(cache_key(env), cooldown_until, expires_in: wait.ceil)
-      end
-
-      # @param error [Faraday::TooManyRequestsError]
-      # @return [Integer, nil] The seconds Fulfil asked to wait, when it said so.
-      def requested_wait(error)
-        value = error.response_headers.to_h.find { |name, _| name.to_s.casecmp?("retry-after") }&.last
-        return if value.blank?
-
-        value.to_s.match?(/\A\d+\z/) ? value.to_i : [(Time.httpdate(value.to_s) - Time.now).ceil, 0].max
-      rescue ArgumentError
-        nil
       end
 
       # @return [ActiveSupport::Cache::Store]

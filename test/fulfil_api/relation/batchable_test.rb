@@ -253,6 +253,18 @@ module FulfilApi
         assert_equal [7], @waits
       end
 
+      def test_waiting_until_fulfil_resets_its_rate_limit
+        stub_request(:put, /fulfil\.io/)
+          .and_return(
+            too_many_requests(headers: { "X-RateLimit-Reset" => (Time.now.to_i + 3).to_s }),
+            { status: 200, body: [{ id: 1 }].to_json, headers: { "Content-Type": "application/json" } }
+          )
+
+        @relation.in_batches { |batch| batch }
+
+        assert_includes 2..3, @waits.first
+      end
+
       def test_capping_the_wait_fulfil_asks_for
         stub_request(:put, /fulfil\.io/)
           .and_return(
