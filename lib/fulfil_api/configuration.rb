@@ -15,6 +15,12 @@ module FulfilApi
     #     {FulfilApi::Middleware::CircuitBreaker}.
     attr_accessor :circuit_breaker
 
+    # @!attribute [rw] rate_limit_cooldown
+    #   @return [ActiveSupport::Cache::Store, nil] The store that shares the cooldown after a
+    #     429 of Fulfil across threads and processes, or nil to turn the cooldown off. See
+    #     {FulfilApi::Middleware::RateLimitCooldown}.
+    attr_accessor :rate_limit_cooldown
+
     DEFAULT_API_VERSION = "v2"
     DEFAULT_REQUEST_OPTIONS = { open_timeout: 1, read_timeout: 5, write_timeout: 5, timeout: 5 }.freeze
 

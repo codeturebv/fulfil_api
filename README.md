@@ -92,6 +92,8 @@ end
 
 - `circuit_breaker` (`Faulty`, optional): A [Faulty](https://github.com/ParentSquare/faulty) instance to stop sending requests to a Fulfil instance that keeps failing. Off by default. See [Stopping requests to a failing Fulfil instance](#stopping-requests-to-a-failing-fulfil-instance).
 
+- `rate_limit_cooldown` (`ActiveSupport::Cache::Store`, optional): A cache store to share a cooldown after Fulfil rate limits a request, so the rest of the application stops calling it for a moment. Off by default. See [Cooling down after a rate limit](#cooling-down-after-a-rate-limit).
+
 - `connection_options` (`Hash`): Tuning for the persistent (keep-alive) connection. Supported keys:
   - `max_retries` (optional): Re-enables Ruby's built-in retry, which retries **every** idempotent request (`GET`/`HEAD`/`PUT`/`DELETE`/`OPTIONS`) whatever its endpoint, writes through `PUT` included. Off by default; prefer `retry_options`.
   - `idle_timeout` (`Integer`, optional): Seconds a pooled socket may sit idle before it is recycled. Lower this towards your server's keep-alive window to shrink the stale-socket window for non-idempotent requests.
@@ -123,6 +125,18 @@ end
 Every Fulfil instance gets its own circuit, so one failing instance never stops requests to another. The `Client` and the `TplClient` of the same instance share a circuit. Timeouts, dropped connections and 5xx responses count as failures. A 4xx response is an answer and doesn't count, and a request that failed after retrying counts once.
 
 While a circuit is closed, failed requests raise the same `FulfilApi::HttpError` they always do. Once it opens, requests raise a `FulfilApi::CircuitOpen` without touching the network, until Faulty's cool-down lets a test request through.
+
+### Cooling down after a rate limit
+
+Fulfil answers with a 429 when an application sends too many requests, and the limits aren't published (they differ per merchant). Once one request is rate limited, sending more right away only earns more 429s. The gem can share a cooldown across every thread and process instead: the first 429 starts it, and until it has passed, requests to that Fulfil instance raise the same `FulfilApi::HttpError::TooManyRequests` without being sent.
+
+```ruby
+FulfilApi.configure do |config|
+  config.rate_limit_cooldown = Rails.cache # any ActiveSupport::Cache::Store
+end
+```
+
+The cooldown lasts as long as Fulfil's `Retry-After` header asks, or two seconds when it doesn't say, and never longer than 30 seconds. A refused request carries the seconds left in its `retry-after` header, so `in_batches` (and `find_each`) wait just long enough before retrying. Use a store every process shares, like Redis, for the cooldown to reach all of them; a memory store only covers the threads of one process.
 
 ### Authenticating with OAuth (Rails)
 

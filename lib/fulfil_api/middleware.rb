@@ -16,6 +16,7 @@ module FulfilApi
       # @param configuration [FulfilApi::Configuration] The configuration of the client.
       # @return [void]
       def apply(connection, configuration)
+        connection.use RateLimitCooldown, store: configuration.rate_limit_cooldown if configuration.rate_limit_cooldown
         connection.use CircuitBreaker, faulty: configuration.circuit_breaker if configuration.circuit_breaker
         connection.request :retry, retry_middleware_options(configuration.retry_options)
       end

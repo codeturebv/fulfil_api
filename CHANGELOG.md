@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Add an optional cooldown after a rate limit. With `config.rate_limit_cooldown` set to a cache store, the first 429 of a Fulfil instance makes every thread and process that shares the store stop sending requests to it for as long as Fulfil's `Retry-After` header asks (two seconds when it doesn't say, at most 30). Requests during the cooldown raise `FulfilApi::HttpError::TooManyRequests` without touching the network, with the seconds left in their `retry-after` header.
+
 - Back off between the retries of `in_batches` (and `find_each`) when Fulfil answers with a 429. It used to retry every 0.25 seconds for as long as it took, which kept a rate limited application calling Fulfil four times a second per thread. It now waits as long as Fulfil's `Retry-After` header asks, and otherwise doubles the wait from half a second, never longer than 30 seconds and with some jitter so threads that were rate limited together don't retry together.
 
 - Send the `grant_type` and `redirect_uri` in the form body when exchanging an authorization code, the way OAuth 2.0 defines the token request. The grant type used to travel in the query string and the redirect URI was left out, which Fulfil accepts today but isn't required to.
