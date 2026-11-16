@@ -6,7 +6,18 @@ module FulfilApi
   class Relation
     class BatchableTest < Minitest::Test
       def setup
+        super
         @relation = FulfilApi::Resource.set(model_name: "sale.sale")
+
+        # Record the waits between retries instead of actually sleeping through them.
+        @waits = waits = []
+        @original_pause = Batchable.method(:pause)
+        Batchable.define_singleton_method(:pause) { |seconds| waits << seconds }
+      end
+
+      def teardown
+        Batchable.define_singleton_method(:pause, @original_pause)
+        super
       end
 
       def test_finding_individual_resources_effectively
@@ -201,6 +212,76 @@ module FulfilApi
             batch
           end
         end
+      end
+
+      def test_waiting_longer_after_every_retry
+        stub_request(:put, /fulfil\.io/)
+          .and_return(
+            *Array.new(3) { too_many_requests },
+            { status: 200, body: [{ id: 1 }].to_json, headers: { "Content-Type": "application/json" } }
+          )
+
+        @relation.in_batches { |batch| batch }
+
+        assert_equal 3, @waits.size
+        assert_includes 0.25..0.5, @waits[0]
+        assert_includes 0.5..1.0, @waits[1]
+        assert_includes 1.0..2.0, @waits[2]
+      end
+
+      def test_never_waiting_longer_than_the_maximum
+        stub_request(:put, /fulfil\.io/)
+          .and_return(
+            *Array.new(10) { too_many_requests },
+            { status: 200, body: [{ id: 1 }].to_json, headers: { "Content-Type": "application/json" } }
+          )
+
+        @relation.in_batches { |batch| batch }
+
+        assert(@waits.all? { |wait| wait <= Batchable::RETRY_MAX_WAIT })
+      end
+
+      def test_waiting_as_long_as_fulfil_asks
+        stub_request(:put, /fulfil\.io/)
+          .and_return(
+            too_many_requests(headers: { "Retry-After" => "7" }),
+            { status: 200, body: [{ id: 1 }].to_json, headers: { "Content-Type": "application/json" } }
+          )
+
+        @relation.in_batches { |batch| batch }
+
+        assert_equal [7], @waits
+      end
+
+      def test_waiting_until_fulfil_resets_its_rate_limit
+        stub_request(:put, /fulfil\.io/)
+          .and_return(
+            too_many_requests(headers: { "X-RateLimit-Reset" => (Time.now.to_i + 3).to_s }),
+            { status: 200, body: [{ id: 1 }].to_json, headers: { "Content-Type": "application/json" } }
+          )
+
+        @relation.in_batches { |batch| batch }
+
+        assert_includes 2..3, @waits.first
+      end
+
+      def test_capping_the_wait_fulfil_asks_for
+        stub_request(:put, /fulfil\.io/)
+          .and_return(
+            too_many_requests(headers: { "Retry-After" => "120" }),
+            { status: 200, body: [{ id: 1 }].to_json, headers: { "Content-Type": "application/json" } }
+          )
+
+        @relation.in_batches { |batch| batch }
+
+        assert_equal [Batchable::RETRY_MAX_WAIT], @waits
+      end
+
+      private
+
+      def too_many_requests(headers: {})
+        { status: 429, body: { error: "Too Many Requests" }.to_json,
+          headers: { "Content-Type": "application/json" }.merge(headers) }
       end
     end
   end

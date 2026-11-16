@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+- Add an optional cooldown for Fulfil's rate limit. With `config.rate_limit_cooldown` set to a cache store, every thread and process that shares the store stops sending requests to a Fulfil instance once a response says its rate limit budget is spent (`x-ratelimit-remaining: 0`) or a request gets a 429, until the budget resets according to `x-ratelimit-reset` (two seconds when Fulfil doesn't say, at most 30). Requests during the cooldown raise `FulfilApi::HttpError::TooManyRequests` without touching the network, with the seconds left in their `retry-after` header.
+
+- Back off between the retries of `in_batches` (and `find_each`) when Fulfil answers with a 429. It used to retry every 0.25 seconds for as long as it took, which kept a rate limited application calling Fulfil four times a second per thread. It now waits until Fulfil's rate limit resets according to its `Retry-After` or `x-ratelimit-reset` header, and otherwise doubles the wait from half a second, never longer than 30 seconds and with some jitter so threads that were rate limited together don't retry together.
+
 - Send the `grant_type` and `redirect_uri` in the form body when exchanging an authorization code, the way OAuth 2.0 defines the token request. The grant type used to travel in the query string and the redirect URI was left out, which Fulfil accepts today but isn't required to.
 
 - Separate the requested OAuth scopes with spaces instead of commas. Fulfil didn't recognize the comma separated list, and a workspace granted every scope the approving user had rather than the ones that were asked for.
