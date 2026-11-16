@@ -9,6 +9,21 @@ module FulfilApi
       #   been exceeded and we have no other option to cut off the retry mechanism.
       class RetryLimitExceeded < Error; end
 
+      # How long {#in_batches} waits before its first retry after a 429. Every next retry
+      #   waits twice as long, up to {RETRY_MAX_WAIT}.
+      RETRY_BASE_WAIT = 0.5
+
+      # The longest {#in_batches} waits between two retries, also when Fulfil asks for longer.
+      RETRY_MAX_WAIT = 30
+
+      # Pauses the current thread. Separate from {#in_batches} so the wait can be stubbed.
+      #
+      # @param seconds [Numeric]
+      # @return [void]
+      def self.pause(seconds)
+        sleep(seconds)
+      end
+
       # The {#find_each} is a shorthand for iterating over individual API resources
       #   in a memory effective way.
       #
@@ -42,7 +57,9 @@ module FulfilApi
       #   end
       #
       # @note the {#in_batches} automatically retries when it encounters a 429
-      #   (TooManyRequests) HTTP error to ensure the lookup can be completed.
+      #   (TooManyRequests) HTTP error to ensure the lookup can be completed. It waits for as
+      #   long as Fulfil's `Retry-After` header asks, or backs off exponentially (with jitter)
+      #   when there is none, so a rate limited lookup doesn't keep hammering Fulfil.
       #
       # @param of [Integer] The maximum number of resources in a batch.
       # @param retries [Symbol, Integer] The maximum number of retries before raising.
@@ -64,17 +81,52 @@ module FulfilApi
 
           current_offset += 1
           current_retry = 0 # Reset the retries back to the default
-        rescue FulfilApi::HttpError::TooManyRequests
-          if retries != :unlimited && current_retry > retries
-            raise RetryLimitExceeded, "the maximum number of #{retries} retries has been reached."
-          end
+        rescue FulfilApi::HttpError::TooManyRequests => e
+          ensure_retry_allowed!(current_retry, retries)
 
           current_retry += 1
-          sleep 0.25
+          Batchable.pause(retry_wait(current_retry, e))
           retry
         end
 
         self
+      end
+
+      private
+
+      # @param current_retry [Integer] The number of retries so far.
+      # @param retries [Symbol, Integer] The maximum number of retries.
+      # @raise [RetryLimitExceeded] When no retries are left.
+      # @return [void]
+      def ensure_retry_allowed!(current_retry, retries)
+        return if retries == :unlimited || current_retry <= retries
+
+        raise RetryLimitExceeded, "the maximum number of #{retries} retries has been reached."
+      end
+
+      # @param attempt [Integer] The number of the upcoming retry, starting at 1.
+      # @param error [FulfilApi::HttpError::TooManyRequests] The rate limit error of Fulfil.
+      # @return [Numeric] The number of seconds to wait before retrying.
+      def retry_wait(attempt, error)
+        requested_wait = retry_after(error)
+        return [requested_wait, RETRY_MAX_WAIT].min if requested_wait
+
+        backoff = [RETRY_BASE_WAIT * (2**(attempt - 1)), RETRY_MAX_WAIT].min
+
+        # Wait somewhere between half and the full backoff, so threads that were rate limited at
+        #   the same moment don't all retry at the same moment too.
+        backoff * rand(0.5..1.0)
+      end
+
+      # @param error [FulfilApi::HttpError::TooManyRequests]
+      # @return [Integer, nil] The seconds Fulfil asked us to wait, when it said so.
+      def retry_after(error)
+        value = error.response_headers.to_h.find { |name, _| name.to_s.casecmp?("retry-after") }&.last
+        return if value.blank?
+
+        value.to_s.match?(/\A\d+\z/) ? value.to_i : [(Time.httpdate(value.to_s) - Time.now).ceil, 0].max
+      rescue ArgumentError
+        nil
       end
     end
   end

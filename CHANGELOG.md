@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Back off between the retries of `in_batches` (and `find_each`) when Fulfil answers with a 429. It used to retry every 0.25 seconds for as long as it took, which kept a rate limited application calling Fulfil four times a second per thread. It now waits as long as Fulfil's `Retry-After` header asks, and otherwise doubles the wait from half a second, never longer than 30 seconds and with some jitter so threads that were rate limited together don't retry together.
+
 - Send the `grant_type` and `redirect_uri` in the form body when exchanging an authorization code, the way OAuth 2.0 defines the token request. The grant type used to travel in the query string and the redirect URI was left out, which Fulfil accepts today but isn't required to.
 
 - Separate the requested OAuth scopes with spaces instead of commas. Fulfil didn't recognize the comma separated list, and a workspace granted every scope the approving user had rather than the ones that were asked for.
