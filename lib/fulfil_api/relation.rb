@@ -32,6 +32,21 @@ module FulfilApi
       reset
     end
 
+    # The query methods build on a copy of the relation. The copy gets its own conditions and
+    #   fields, so adding to them leaves the original relation as it was, and it starts without the
+    #   resources or count of the original, which no longer match its query.
+    #
+    # @param source [FulfilApi::Relation] The relation being copied.
+    def initialize_copy(source)
+      super
+
+      @conditions = source.conditions.dup
+      @fields = source.fields.dup
+      @loaded = false
+      @resources = []
+      @count = nil
+    end
+
     # Loads and returns all resources from Fulfil's API. This method functions as a proxy,
     #   deferring the loading of resources until they are required, thus avoiding unnecessary
     #   HTTP requests.

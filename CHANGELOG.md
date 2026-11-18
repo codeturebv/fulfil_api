@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Give every relation that `where`, `select`, `limit`, `offset` or `set` builds its own conditions and fields. They used to share them with the relation they were built on, so narrowing one relation twice sent the filters of both, and reusing a base relation quietly piled up conditions. A relation built on a loaded or counted one also no longer reuses its resources or count, which belonged to a different query.
+
 - Add an optional cooldown for Fulfil's rate limit. With `config.rate_limit_cooldown` set to a cache store, every thread and process that shares the store stops sending requests to a Fulfil instance once a response says its rate limit budget is spent (`x-ratelimit-remaining: 0`) or a request gets a 429, until the budget resets according to `x-ratelimit-reset` (two seconds when Fulfil doesn't say, at most 30). Requests during the cooldown raise `FulfilApi::HttpError::TooManyRequests` without touching the network, with the seconds left in their `retry-after` header.
 
 - Back off between the retries of `in_batches` (and `find_each`) when Fulfil answers with a 429. It used to retry every 0.25 seconds for as long as it took, which kept a rate limited application calling Fulfil four times a second per thread. It now waits until Fulfil's rate limit resets according to its `Retry-After` or `x-ratelimit-reset` header, and otherwise doubles the wait from half a second, never longer than 30 seconds and with some jitter so threads that were rate limited together don't retry together.
