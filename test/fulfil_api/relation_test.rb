@@ -28,6 +28,26 @@ module FulfilApi
       assert_requested :put, %r{sale.sale/search_read}i, times: 1
     end
 
+    def test_a_relation_built_on_a_loaded_relation_loads_its_own_resources
+      stub_fulfil_request(:put, response: [{ id: 100 }], model: "sale.sale")
+      relation = @relation.set(model_name: "sale.sale")
+
+      relation.to_a
+      relation.where(["state", "=", "done"]).to_a
+
+      assert_requested :put, %r{sale.sale/search_read}i, times: 2
+    end
+
+    def test_a_relation_built_on_a_counted_relation_counts_again
+      stub_fulfil_request(:put, model: "sale.sale", suffix: "search_count", response: 10)
+      relation = @relation.set(model_name: "sale.sale")
+
+      relation.count
+      relation.where(["state", "=", "done"]).count
+
+      assert_requested :put, %r{sale.sale/search_count}i, times: 2
+    end
+
     def test_default_offset_value
       assert_nil @relation.request_offset # By default, we don't have an offset and let Fulfil set the limit (zero).
     end
